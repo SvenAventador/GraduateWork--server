@@ -2,21 +2,29 @@ import {NextFunction, Request, Response} from "express";
 import SecondaryFunctions from "../functions/secondaryFunctions";
 import ErrorHandler from "../error/errorHandler";
 import path from 'path'
-import uuid from 'uuid'
 import {UploadedFile} from "express-fileupload";
 import * as crypto from "crypto";
 
-const {Device, DeviceInfo, DeviceImage, Brand, Type} = require('../models/models')
+const {Device, DeviceInfo, DeviceImage} = require('../models/models')
 
+/**
+ * Интерфейс для характеристик устройств.
+ */
 interface IDeviceInfo {
     infoTitle: string;
     infoDescription: string;
 }
 
+/**
+ * Интерфейс для изображений устройств.
+ */
 interface IDeviceImage {
     imagePath: string
 }
 
+/**
+ * Интерфейс для параметров запроса на получение одного девайса.
+ */
 interface IGetOneDeviceQueryParams {
     typeId?: number;
     brandId?: number;
