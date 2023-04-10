@@ -41,27 +41,6 @@ const User = sequelize.define('user', {
     }
 })
 
-const Role = sequelize.define('role', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    roleName: {
-        type: DataTypes.STRING,
-        unique: true,
-        allowNull: false
-    }
-})
-
-const UserRole = sequelize.define('user_role', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    }
-})
-
 const Cart = sequelize.define('cart', {
     id: {
         type: DataTypes.INTEGER,
@@ -276,9 +255,6 @@ Device.belongsTo(Brand)
 Type.belongsToMany(Brand, {through: TypeBrand })
 Brand.belongsToMany(Type, {through: TypeBrand })
 
-User.belongsToMany(Role, { through: UserRole });
-Role.belongsToMany(User, { through: UserRole });
-
 DeliveryStatus.belongsToMany(PaymentStatus, { through: DeliveryPayment });
 PaymentStatus.belongsToMany(DeliveryStatus, { through: DeliveryPayment });
 
@@ -297,7 +273,5 @@ module.exports = {
     Brand,
     DeviceImage,
     TypeBrand,
-    Role,
-    UserRole,
     DeliveryPayment
 }
