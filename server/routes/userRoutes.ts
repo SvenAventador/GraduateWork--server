@@ -2,11 +2,13 @@ import express, {Router} from 'express'
 
 const routes: Router = express.Router()
 
-import UserController from "../controller/userController";
+import UserController from "../controller/user/userController";
+import authMiddleware from "../middleware/user/authMiddleware";
 
 routes.post('/registration', UserController.registration)
 routes.post('/login', UserController.login)
-routes.post('/logout', UserController.logout)
-routes.get('/auth', /*authMiddleware*/ UserController.check)
+routes.post('/logout', authMiddleware, UserController.logout)
+routes.put('/update/:id', UserController.update)
+routes.get('/auth', authMiddleware, UserController.check)
 
 export default routes

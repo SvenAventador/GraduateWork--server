@@ -5,7 +5,7 @@ import path from 'path'
 import {UploadedFile} from "express-fileupload";
 import * as crypto from "crypto";
 
-const {Device, DeviceInfo, DeviceImage} = require('../models/models')
+const {Device, DeviceInfo, DeviceImage, Rating} = require('../models/models')
 
 /**
  * Интерфейс для характеристик устройств.
@@ -107,10 +107,9 @@ class DeviceController {
                     DeviceImage.create({
                         imagePath: image.imagePath,
                         deviceId: device.id,
-                    })));
+                    })));}
 
-                return res.json(device)
-            }
+            return res.json(device)
         } catch (error) {
             return next(error)
         }
@@ -123,7 +122,38 @@ class DeviceController {
      * @param next - переход к следующей функции.
      */
     async calculateMark(req: Request, res: Response, next: NextFunction) {
-        // TODO
+        try {
+            const {id} = req.params
+
+            if (!SecondaryFunctions.isNumber(id)) {
+                return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+            }
+
+            const deviceCandidate = await Device.findOne({where: {id: id}})
+            if (!deviceCandidate) {
+                return next(ErrorHandler.badRequest(`Устройство с ID ${id} не найдено!`))
+            }
+
+            const markData = await Rating.findAll({where: {deviceId: id}})
+            if (markData.length === 0) {
+                return next(ErrorHandler.conflict("Данное устройство ни разу не было оценено!"))
+            }
+
+            const marks = markData.map((rate: any) => rate.dataValues.rate)
+
+            let resultMark = 0;
+
+            for (let i = 0; i < marks.length; i++) {
+                resultMark += marks[i]
+            }
+
+            resultMark /= marks.length
+            Device.update({rating: resultMark}, {where: {id}}).then(() => {
+                return res.status(200).json({message: "Рейтинг успешно обновлен!"})
+            })
+        } catch(error) {
+            return next(error)
+        }
     }
 
     /**
@@ -205,6 +235,10 @@ class DeviceController {
     async getOne(req: Request, res: Response, next: NextFunction) {
 
         const {id} = req.params
+
+        if (!SecondaryFunctions.isNumber(id)) {
+            return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+        }
 
         const device = await Device.findOne({
             where: {id},

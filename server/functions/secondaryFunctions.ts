@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 
-interface User {
+export interface IUser {
     id: number;
     userName: string;
     userEmail: string;
@@ -11,7 +11,8 @@ class SecondaryFunctions {
 
     /**
      * Проверить, является ли параметр "value" строкой.
-     * @param value
+     * @param value - параметр для проверки.
+     * @returns {boolean} - true - строка / false - не строка.
      */
     static isString(value: unknown): value is string {
         return ((typeof (value) === "string") ||
@@ -69,8 +70,8 @@ class SecondaryFunctions {
      * 3) Как минимум одну цифру.
      * 4) Размер пароля должен быть от 8 до 15 символов.
      * 5) Раскладка исключительно латиницей.
-     * @param password
-     * @returns {boolean}
+     * @param password - пароль.
+     * @returns {boolean} - true - валидный пароль / false - не валидный пароль.
      */
     static validatePassword(password: unknown): boolean {
         const regex =  /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
@@ -81,10 +82,23 @@ class SecondaryFunctions {
     }
 
     /**
+     * Валидация мобильного телефона.
+     * @param phone - телефон.
+     * @returns {boolean} - true - валидный телефон / false - не валидный телефон.
+     */
+    static validatePhone(phone: unknown): boolean {
+        const regex = /^(\+7|8)?\s?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/;
+
+        if (!this.isEmpty(phone) && this.isString(phone))
+            return regex.test(phone)
+        else return false
+    }
+
+    /**
      * Генерация JsonWebToken.
      * @param user - объект пользователя.
      */
-    static generate_jwt = (user: User): string => {
+    static generate_jwt = (user: IUser): string => {
         const {id, userName, userEmail, userRole} = user;
         const payload = {id, userName, userEmail, userRole};
         return jwt.sign(
