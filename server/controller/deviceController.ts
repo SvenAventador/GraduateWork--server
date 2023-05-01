@@ -4,8 +4,17 @@ import ErrorHandler from "../error/errorHandler";
 import path from 'path'
 import {UploadedFile} from "express-fileupload";
 import * as crypto from "crypto";
+import {Op} from "sequelize";
 
-const {Device, DeviceInfo, DeviceImage, Rating} = require('../models/models')
+const {
+    Device,
+    DeviceInfo,
+    DeviceImage,
+    Rating,
+    WirelessType,
+    DeviceWirelessType,
+    FavouriteDevice
+} = require('../models/models')
 
 /**
  * Интерфейс для характеристик устройств.
@@ -19,17 +28,23 @@ interface IDeviceInfo {
  * Интерфейс для изображений устройств.
  */
 interface IDeviceImage {
-    imagePath: string
+    imagePath: string,
 }
 
 /**
- * Интерфейс для параметров запроса на получение одного девайса.
+ * Интерфейс для параметров запроса на получение отсортированных девайсов.
  */
 interface IGetOneDeviceQueryParams {
     typeId?: number;
     brandId?: number;
+    colorId?: number;
+    deviceMaterialId?: number;
+    wirelessTypeIds?: string | undefined;
     limit?: number;
     page?: number;
+    priceFrom?: number;
+    priceTo?: number;
+    rating?: number;
 }
 
 /**
@@ -45,22 +60,40 @@ class DeviceController {
      */
     async create(req: Request, res: Response, next: NextFunction) {
         try {
-            let {deviceName, devicePrice, deviceDescription, typeId, brandId, info} = req.body
+            let {
+                deviceName,
+                devicePrice,
+                deviceDescription,
+                typeId,
+                brandId,
+                colorId,
+                deviceMaterialId,
+                info,
+                wirelessTypeIds,
+            } = req.body
 
             if ((!SecondaryFunctions.isString(deviceName)) || SecondaryFunctions.isEmpty(deviceName)) {
                 return next(ErrorHandler.badRequest('Название товара должно быть в строковой формате и не может быть пустым!'))
             }
 
-            if(!(SecondaryFunctions.isNumber(devicePrice))) {
+            if (!(SecondaryFunctions.isNumber(devicePrice))) {
                 return next(ErrorHandler.badRequest('Цена товара должна быть указана в числовом формате!'))
             }
 
-            if(!(SecondaryFunctions.isNumber(typeId))) {
+            if (!(SecondaryFunctions.isNumber(typeId))) {
                 return next(ErrorHandler.badRequest('ID типа должно быть указано в числовом формате!'))
             }
 
-            if(!(SecondaryFunctions.isNumber(brandId))) {
+            if (!(SecondaryFunctions.isNumber(brandId))) {
                 return next(ErrorHandler.badRequest('ID бренда должно быть указано в числовом формате!'))
+            }
+
+            if (!(SecondaryFunctions.isNumber(colorId))) {
+                return next(ErrorHandler.badRequest('ID цвета должно быть указано в числовом формате!'))
+            }
+
+            if (!(SecondaryFunctions.isNumber(deviceMaterialId))) {
+                return next(ErrorHandler.badRequest('ID материала корпуса должно быть указано в числовом формате!'))
             }
 
             if (!(SecondaryFunctions.isString(deviceDescription)) || SecondaryFunctions.isEmpty(deviceDescription)) {
@@ -77,7 +110,9 @@ class DeviceController {
                 devicePrice,
                 deviceDescription,
                 typeId,
-                brandId
+                brandId,
+                colorId,
+                deviceMaterialId,
             })
 
             if (info) {
@@ -102,16 +137,80 @@ class DeviceController {
                 }
             }
 
+            console.log(wirelessTypeIds)
+
             if (deviceImage.length > 0) {
-                await Promise.all(deviceImage.map(image =>
-                    DeviceImage.create({
-                        imagePath: image.imagePath,
+                await Promise.all(deviceImage.map((image: IDeviceImage, index: number) =>
+                        DeviceImage.create({
+                            imagePath: image.imagePath,
+                            deviceId: device.id,
+                            isMainImage: index === 0
+                        })
+                    )
+                );
+            }
+
+            if (wirelessTypeIds) {
+                const wirelessType = JSON.parse(wirelessTypeIds)
+
+                if (Array.isArray(wirelessType) && wirelessType.length > 0) {
+                    await Promise.all(wirelessType.map((index: number) => {
+                        DeviceWirelessType.create({
+                            deviceId: device.id,
+                            wirelessTypeId: index
+                        })
+                    }))
+                } else if (wirelessType && !Array.isArray(wirelessType)) {
+                    await DeviceWirelessType.create({
                         deviceId: device.id,
-                    })));}
+                        wirelessTypeId: wirelessType
+                    })
+                }
+            } else {
+                await DeviceWirelessType.create({
+                    deviceId: device.id,
+                    wirelessTypeId: 1
+                })
+            }
 
             return res.json(device)
         } catch (error) {
             return next(error)
+        }
+    }
+
+    /**
+     * Добавление устройства в избранное.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async createFavourite(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {userId, deviceId} = req.params
+
+            if ((!SecondaryFunctions.isNumber(userId)) || SecondaryFunctions.isEmpty(userId)) {
+                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
+            }
+
+            if ((!SecondaryFunctions.isNumber(deviceId)) || SecondaryFunctions.isEmpty(deviceId)) {
+                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
+            }
+
+            const candidate = await Device.findOne({where: {id: deviceId}})
+            if (!candidate) {
+                return next(ErrorHandler.notFound('Данное устройство не найдено в нашей системе!'))
+            }
+
+            const favouriteCandidate = await FavouriteDevice.findOne({where: {deviceId: deviceId}})
+            if (favouriteCandidate) {
+                return next(ErrorHandler.conflict('Данное устройство есть в списках избранных!'))
+            }
+
+            await FavouriteDevice.create({userId, deviceId})
+            return res.status(200).json({message: 'Товар успешно добавлен в список избранных!'})
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
     }
 
@@ -151,7 +250,7 @@ class DeviceController {
             Device.update({rating: resultMark}, {where: {id}}).then(() => {
                 return res.status(200).json({message: "Рейтинг успешно обновлен!"})
             })
-        } catch(error) {
+        } catch (error) {
             return next(error)
         }
     }
@@ -163,64 +262,132 @@ class DeviceController {
      * @param next - переход к следующей функции.
      */
     async getAll(req: Request, res: Response, next: NextFunction) {
-        const {typeId, brandId, limit, page}: IGetOneDeviceQueryParams = req.query
-        let offset: number = 0
-        let devices;
-
-        if (limit && page) {
-            offset = (Number(page) - 1) * Number(limit)
-        }
-
         try {
-            if (!brandId && !typeId) {
+            const {
+                typeId,
+                brandId,
+                colorId,
+                deviceMaterialId,
+                wirelessTypeIds,
+                limit,
+                page,
+                priceFrom,
+                priceTo,
+                rating
+            }: IGetOneDeviceQueryParams = req.query;
+            let offset: number = 0
+            let devices;
+
+            if (limit && page) {
+                offset = (Number(page) - 1) * Number(limit)
+            }
+
+            let sortCondition = {}
+
+            if (brandId) {
+                sortCondition = {...sortCondition, brandId}
+            }
+
+            if (typeId) {
+                sortCondition = {...sortCondition, typeId}
+            }
+
+            if (colorId) {
+                sortCondition = {...sortCondition, colorId}
+            }
+
+            if (deviceMaterialId) {
+                sortCondition = {...sortCondition, deviceMaterialId}
+            }
+
+            let orderClause: Array<string | [string, string]> = ['id']
+
+            if (priceFrom && !priceTo) {
+                sortCondition = {
+                    ...sortCondition,
+                    devicePrice: {
+                        [Op.gte]: Number(priceFrom)
+                    }
+                };
+                orderClause = [['price', 'ASC']]
+            }
+
+            if (priceTo && !priceFrom) {
+                sortCondition = {
+                    ...sortCondition,
+                    devicePrice: {
+                        [Op.lte]: Number(priceTo)
+                    }
+                };
+                orderClause = [['price', 'ASC']]
+            }
+
+            if (priceTo && priceFrom) {
+                sortCondition = {
+                    ...sortCondition,
+                    devicePrice: {
+                        [Op.between]: [Number(priceFrom), Number(priceTo)]
+                    }
+                };
+                orderClause = [['price', 'ASC']]
+            }
+
+            if (rating) {
+                sortCondition = {
+                    ...sortCondition,
+                    rating: {
+                        [Op.eq]: rating
+                    }
+                };
+                orderClause = [['rating', 'DESC']]
+            }
+
+            const wirelessTypeId = wirelessTypeIds ? JSON.parse(wirelessTypeIds) : undefined;
+            console.log(wirelessTypeId, '----------------', wirelessTypeIds)
+            if (Array.isArray(wirelessTypeId) && wirelessTypeId.length > 0) {
                 devices = await Device.findAndCountAll({
-                    order: ['id'],
-                    limit,
-                    offset,
+                    where: sortCondition,
                     include: [
-                        {model: DeviceImage, as: 'images'}
-                    ]
+                        {model: DeviceImage, as: 'images'},
+                        {
+                            model: WirelessType,
+                            through: {attributes: []},
+                            where: {id: {[Op.in]: wirelessTypeId}}
+                        }
+                    ],
+                    order: orderClause,
+                    limit,
+                    offset
+                })
+            } else if (wirelessTypeId && !Array.isArray(wirelessTypeId)) {
+                devices = await Device.findAndCountAll({
+                    where: sortCondition,
+                    include: [
+                        {model: DeviceImage, as: 'images'},
+                        {
+                            model: WirelessType,
+                            through: {attributes: []},
+                            where: {id: wirelessTypeId}
+                        }
+                    ],
+                    order: orderClause,
+                    limit,
+                    offset
+                })
+            } else {
+                devices = await Device.findAndCountAll({
+                    where: sortCondition,
+                    include: [
+                        {model: DeviceImage, as: 'images'},
+                    ],
+                    order: orderClause,
+                    limit,
+                    offset
                 })
             }
 
-            if (!brandId && typeId) {
-                devices = await Device.findAndCountAll({
-                    order: ['id'],
-                    where: {typeId},
-                    limit,
-                    offset,
-                    include: [
-                        {model: DeviceImage, as: 'images'}
-                    ]
-                })
-            }
-
-            if (brandId && !typeId) {
-                devices = await Device.findAndCountAll({
-                    order: ['id'],
-                    where: {brandId},
-                    limit,
-                    offset,
-                    include: [
-                        {model: DeviceImage, as: 'images'}
-                    ]
-                })
-            }
-
-            if (brandId && typeId) {
-                devices = await Device.findAndCountAll({
-                    order: ['id'],
-                    where: {typeId, brandId},
-                    limit,
-                    offset,
-                    include: [
-                        {model: DeviceImage, as: 'images'}
-                    ]
-                })
-            }
 
             return res.json(devices)
-
         } catch (error) {
             return next(error)
         }
@@ -233,7 +400,6 @@ class DeviceController {
      * @param next - переход к следующей функции.
      */
     async getOne(req: Request, res: Response, next: NextFunction) {
-
         const {id} = req.params
 
         if (!SecondaryFunctions.isNumber(id)) {
@@ -243,16 +409,70 @@ class DeviceController {
         const device = await Device.findOne({
             where: {id},
             include: [
-                {
-                    model: DeviceInfo, as: 'info'
-                },
-                {
-                    model: DeviceImage, as: 'images'
-                }
+                {model: DeviceInfo, as: 'info'},
+                {model: DeviceImage, as: 'images'},
             ]
         })
 
         return res.json(device)
+    }
+
+    /**
+     * Удаление одного товара из списка избранных.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async deleteFavourite(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {userId, deviceId} = req.params
+
+            if ((!SecondaryFunctions.isNumber(userId)) || SecondaryFunctions.isEmpty(userId)) {
+                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
+            }
+
+            if ((!SecondaryFunctions.isNumber(deviceId)) || SecondaryFunctions.isEmpty(deviceId)) {
+                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
+            }
+
+            const candidate = await FavouriteDevice.findOne({where: {userId, deviceId}})
+            if (candidate) {
+                await candidate.destroy()
+                return res.status(200).json({message: 'Товар успешно удален из списка избранных товаров!'})
+            } else {
+                return next(ErrorHandler.badRequest('Данный товар не найден в списке избраных!'))
+            }
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
+    }
+
+    /**
+     * Очистка списка избранных.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async deleteAllFavourite(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {userId} = req.params
+
+            if ((!SecondaryFunctions.isNumber(userId)) || SecondaryFunctions.isEmpty(userId)) {
+                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
+            }
+
+            const candidate = await FavouriteDevice.findAll({where: {userId}})
+            if (candidate.length === 0) {
+                return res.status(301).json({message: 'Ваш список избранных пустой!'})
+            } else {
+                candidate.map((item: any) => {
+                    item.destroy()
+                    return res.status(200).json({message: 'Ваш список избранных был очищен!'})
+                })
+            }
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
     }
 }
 

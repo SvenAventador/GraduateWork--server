@@ -27,6 +27,10 @@ const User = sequelize.define('user', {
         defaultValue: "USER"
     },
 
+    userImage: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     userFio: {
         type: DataTypes.STRING,
         allowNull: true
@@ -140,7 +144,59 @@ const Device = sequelize.define('device', {
     }
 })
 
-const OrderDevice = sequelize.define('order_device', {
+const FavouriteDevice = sequelize.define('favourite_device', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    }
+})
+
+const Color = sequelize.define('color', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    colorName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    hexValue: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    }
+})
+
+const DeviceMaterial = sequelize.define('device_material', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    materialName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+})
+
+const WirelessType = sequelize.define('wireless_type', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    typeName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+})
+
+const DeviceWirelessType = sequelize.define('device_wireless', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -161,6 +217,31 @@ const DeviceInfo = sequelize.define('device_info', {
     infoDescription: {
         type: DataTypes.TEXT,
         allowNull: false
+    }
+})
+
+const DeviceImage = sequelize.define('device_image', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    imagePath: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    isMainImage: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    }
+})
+
+
+const OrderDevice = sequelize.define('order_device', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
     }
 })
 
@@ -187,18 +268,6 @@ const Brand = sequelize.define('brand', {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true
-    }
-})
-
-const DeviceImage = sequelize.define('device_image', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    imagePath: {
-        type: DataTypes.TEXT,
-        allowNull: false
     }
 })
 
@@ -243,6 +312,12 @@ OrderDevice.belongsTo(Device)
 Device.hasMany(DeviceInfo, {as: 'info'})
 DeviceInfo.belongsTo(Device)
 
+User.hasMany(FavouriteDevice)
+FavouriteDevice.belongsTo(User)
+
+Device.hasMany(FavouriteDevice)
+FavouriteDevice.belongsTo(Device)
+
 Device.hasMany(DeviceImage, {as: 'images'})
 DeviceImage.belongsTo(Device)
 
@@ -251,6 +326,15 @@ Device.belongsTo(Type)
 
 Brand.hasMany(Device)
 Device.belongsTo(Brand)
+
+Color.hasMany(Device)
+Device.belongsTo(Color)
+
+DeviceMaterial.hasMany(Device)
+Device.belongsTo(DeviceMaterial)
+
+Device.belongsToMany(WirelessType, {through: DeviceWirelessType})
+WirelessType.belongsToMany(Device, {through: DeviceWirelessType, as: 'wirelessTypeIds'})
 
 Type.belongsToMany(Brand, {through: TypeBrand })
 Brand.belongsToMany(Type, {through: TypeBrand })
@@ -267,11 +351,16 @@ module.exports = {
     PaymentStatus,
     Rating,
     Device,
-    OrderDevice,
     DeviceInfo,
+    OrderDevice,
     Type,
     Brand,
     DeviceImage,
     TypeBrand,
-    DeliveryPayment
+    DeliveryPayment,
+    Color,
+    DeviceMaterial,
+    WirelessType,
+    DeviceWirelessType,
+    FavouriteDevice
 }
