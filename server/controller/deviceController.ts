@@ -137,8 +137,6 @@ class DeviceController {
                 }
             }
 
-            console.log(wirelessTypeIds)
-
             if (deviceImage.length > 0) {
                 await Promise.all(deviceImage.map((image: IDeviceImage, index: number) =>
                         DeviceImage.create({
