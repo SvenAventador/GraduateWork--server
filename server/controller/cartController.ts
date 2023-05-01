@@ -53,7 +53,6 @@ class CartController {
 
             for (let i = 0; i < deviceItem.length; i++) {
                 const devices = await Device.findOne({where: {id: deviceItem[i]}, include: {model: DeviceImage, as: 'images'}})
-                console.log(devices, devices.dataValues)
                 device.push(devices.dataValues)
             }
 

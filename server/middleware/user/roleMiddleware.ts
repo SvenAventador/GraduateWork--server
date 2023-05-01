@@ -24,7 +24,6 @@ export default function (role: string) {
             req.user = verifiedToken
             next()
         } catch(error) {
-            console.log(error)
             return next(ErrorHandler.unauthorized("Данный пользователь не авторизован"))
         }
 

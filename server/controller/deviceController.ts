@@ -341,7 +341,6 @@ class DeviceController {
             }
 
             const wirelessTypeId = wirelessTypeIds ? JSON.parse(wirelessTypeIds) : undefined;
-            console.log(wirelessTypeId, '----------------', wirelessTypeIds)
             if (Array.isArray(wirelessTypeId) && wirelessTypeId.length > 0) {
                 devices = await Device.findAndCountAll({
                     where: sortCondition,

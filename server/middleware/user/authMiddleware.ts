@@ -30,7 +30,6 @@ export default function (req: Request & ICustomRequest, res: Response, next: Nex
         
         next()
     } catch(error) {
-        console.log(error)
         return next(ErrorHandler.unauthorized("Данный пользователь не авторизован!"))
     }
 }
