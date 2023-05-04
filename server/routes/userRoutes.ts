@@ -7,7 +7,6 @@ import authMiddleware from "../middleware/user/authMiddleware";
 
 routes.post('/registration', UserController.registration)
 routes.post('/login', UserController.login)
-routes.post('/logout', authMiddleware, UserController.logout)
 routes.put('/update/:id', UserController.update)
 routes.get('/auth', authMiddleware, UserController.check)
 

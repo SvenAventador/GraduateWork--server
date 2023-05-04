@@ -43,7 +43,7 @@ class TypeController {
      */
     async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const types = await Type.findAndCountAll()
+            const types = await Type.findAll()
             return res.json(types)
         } catch (error) {
             return next(error)

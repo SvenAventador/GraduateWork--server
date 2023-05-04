@@ -90,6 +90,12 @@ class CartController {
                 return next(ErrorHandler.badRequest(`Устройство с ID ${deviceId} не найдено!`))
             }
 
+            const candidate = await CartDevice.findOne({where: deviceId})
+            if (candidate) {
+                await candidate.update({amountDevice: candidate.amountDevice + 1})
+                return res.json({message: `Товар обновил свое количество, новое количество ${candidate.amountDevice}`})
+            }
+
             await CartDevice.create({cartId, deviceId})
             return res.status(200).json({message: "Товар успешно добавлен в корзину!"})
         } catch {

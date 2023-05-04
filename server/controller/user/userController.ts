@@ -63,9 +63,9 @@ class UserController {
          await Cart.create({userId: user.id})
 
          const userDto = new UserDto(user.id,
-                                     user.userName,
-                                     user.userEmail,
-                                     user.userRole)
+             user.userName,
+             user.userEmail,
+             user.userRole)
 
          const token = SecondaryFunctions.generate_jwt(userDto as IUser)
          res.cookie("token", token, {
@@ -121,9 +121,9 @@ class UserController {
          }
 
          const userDto = new UserDto(user.id,
-                                     user.userName,
-                                     user.userEmail,
-                                     user.userRole)
+             user.userName,
+             user.userEmail,
+             user.userRole)
          const token = SecondaryFunctions.generate_jwt(userDto as IUser)
          res.cookie("token", token, {
             httpOnly: true,
@@ -144,9 +144,9 @@ class UserController {
     */
    async check(req: Request & ICustomRequest, res: Response, next: NextFunction) {
       const userDto = new UserDto(req.user.id,
-                                   req.user.userName,
-                                   req.user.userEmail,
-                                   req.user.userRole)
+          req.user.userName,
+          req.user.userEmail,
+          req.user.userRole)
       const token = SecondaryFunctions.generate_jwt(userDto as IUser)
 
       return res.json({token})
@@ -160,14 +160,15 @@ class UserController {
     */
    async update(req: Request, res: Response, next: NextFunction) {
       try {
-         const { id } = req.params;
+         const {id} = req.params;
          const {
             userName,
             userEmail,
             userPassword,
             userFio,
             userAddress,
-            userPhone } = req.body;
+            userPhone
+         } = req.body;
 
          if (!SecondaryFunctions.isNumber(id)) {
             return next(ErrorHandler.badRequest("Неправильный параметр запроса!"));
@@ -202,20 +203,20 @@ class UserController {
             return next(ErrorHandler.badRequest("Некорректно введенный номер телефона!"));
          }
 
-         const candidate = await User.findOne({ where: { id } });
+         const candidate = await User.findOne({where: {id}});
          if (!candidate) {
             return next(ErrorHandler.conflict("Такого пользователя не найдено в системе!"));
          }
 
          if (userEmail && userEmail !== candidate.userEmail) {
-            const emailCandidate = await User.findOne({ where: { userEmail } });
+            const emailCandidate = await User.findOne({where: {userEmail}});
             if (emailCandidate) {
                return next(ErrorHandler.conflict("Пользователь с такой почтой уже существует в системе!"));
             }
          }
 
          if (userName && userName !== candidate.userName) {
-            const nameCandidate = await User.findOne({where: { userName }})
+            const nameCandidate = await User.findOne({where: {userName}})
             if (nameCandidate) {
                return next(ErrorHandler.conflict("Пользователь с такой почтой уже существует в системе!"));
             }
@@ -234,33 +235,6 @@ class UserController {
 
          return res.json(candidate)
       } catch (error) {
-         return next(ErrorHandler.internal(`Непредвиденная ошибка: ${error}`))
-      }
-   }
-
-   /**
-    * Выход из аккаунта (Очистка куков).
-    * @param req - запрос.
-    * @param res - ответ.
-    * @param next - переход к следующей функции.
-    */
-   async logout(req: Request & ICustomRequest, res: Response, next: NextFunction) {
-      try {
-         if (!req.user) {
-            return next(ErrorHandler.unauthorized("Данный пользователь не авторизован!"))
-         }
-
-         const cookieHeader = req.cookies.token
-         if (cookieHeader) {
-            res.cookie('token', null, {
-               expires: new Date(Date.now()),
-               httpOnly: true
-            })
-         }
-
-         req.user = undefined
-         return res.json({message: "Успешный выход из системы!"})
-      } catch(error) {
          return next(ErrorHandler.internal(`Непредвиденная ошибка: ${error}`))
       }
    }

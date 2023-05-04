@@ -42,7 +42,7 @@ class BrandController {
      */
     async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const brands = await Brand.findAndCountAll()
+            const brands = await Brand.findAll()
             return res.json(brands)
         } catch (error) {
             return next(error)

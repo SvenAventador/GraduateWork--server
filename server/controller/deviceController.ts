@@ -11,8 +11,6 @@ const {
     DeviceInfo,
     DeviceImage,
     Rating,
-    WirelessType,
-    DeviceWirelessType,
     FavouriteDevice
 } = require('../models/models')
 
@@ -45,6 +43,7 @@ interface IGetOneDeviceQueryParams {
     priceFrom?: number;
     priceTo?: number;
     rating?: number;
+    wirelessTypeId?: number;
 }
 
 /**
@@ -69,32 +68,37 @@ class DeviceController {
                 colorId,
                 deviceMaterialId,
                 info,
-                wirelessTypeIds,
+                wirelessTypeId,
             } = req.body
 
             if ((!SecondaryFunctions.isString(deviceName)) || SecondaryFunctions.isEmpty(deviceName)) {
                 return next(ErrorHandler.badRequest('Название товара должно быть в строковой формате и не может быть пустым!'))
             }
 
-            if (!(SecondaryFunctions.isNumber(devicePrice))) {
-                return next(ErrorHandler.badRequest('Цена товара должна быть указана в числовом формате!'))
+            if (!(SecondaryFunctions.isNumber(devicePrice)) || (SecondaryFunctions.isEmpty(devicePrice))) {
+                return next(ErrorHandler.badRequest('Цена товара должна быть указана в числовом формате и не может быть пустой!'))
             }
 
-            if (!(SecondaryFunctions.isNumber(typeId))) {
-                return next(ErrorHandler.badRequest('ID типа должно быть указано в числовом формате!'))
+            if (!(SecondaryFunctions.isNumber(typeId)) || (SecondaryFunctions.isEmpty(typeId))) {
+                return next(ErrorHandler.badRequest('ID типа должно быть указано в числовом формате и не может быть пустым!'))
             }
 
-            if (!(SecondaryFunctions.isNumber(brandId))) {
-                return next(ErrorHandler.badRequest('ID бренда должно быть указано в числовом формате!'))
+            if (!(SecondaryFunctions.isNumber(brandId)) || (SecondaryFunctions.isEmpty(brandId))) {
+                return next(ErrorHandler.badRequest('ID бренда должно быть указано в числовом формате и не может быть пустым!'))
             }
 
-            if (!(SecondaryFunctions.isNumber(colorId))) {
-                return next(ErrorHandler.badRequest('ID цвета должно быть указано в числовом формате!'))
+            if (!(SecondaryFunctions.isNumber(colorId)) || (SecondaryFunctions.isEmpty(colorId))) {
+                return next(ErrorHandler.badRequest('ID цвета должно быть указано в числовом формате и не может быть пустым!'))
             }
 
-            if (!(SecondaryFunctions.isNumber(deviceMaterialId))) {
-                return next(ErrorHandler.badRequest('ID материала корпуса должно быть указано в числовом формате!'))
+            if (!(SecondaryFunctions.isNumber(deviceMaterialId)) || (SecondaryFunctions.isEmpty(deviceMaterialId))) {
+                return next(ErrorHandler.badRequest('ID материала корпуса должно быть указано в числовом формате и не может быть пустым!'))
             }
+
+            if (!(SecondaryFunctions.isNumber(wirelessTypeId)) || (SecondaryFunctions.isEmpty(wirelessTypeId))) {
+                return next(ErrorHandler.badRequest('ID беспроводного устройства должно быть указано в числовом формате и не может быть пустым!'))
+            }
+
 
             if (!(SecondaryFunctions.isString(deviceDescription)) || SecondaryFunctions.isEmpty(deviceDescription)) {
                 return next(ErrorHandler.badRequest('Описание товара должно быть в строковой формате и не может быть пустым!'))
@@ -113,6 +117,7 @@ class DeviceController {
                 brandId,
                 colorId,
                 deviceMaterialId,
+                wirelessTypeId
             })
 
             if (info) {
@@ -146,29 +151,6 @@ class DeviceController {
                         })
                     )
                 );
-            }
-
-            if (wirelessTypeIds) {
-                const wirelessType = JSON.parse(wirelessTypeIds)
-
-                if (Array.isArray(wirelessType) && wirelessType.length > 0) {
-                    await Promise.all(wirelessType.map((index: number) => {
-                        DeviceWirelessType.create({
-                            deviceId: device.id,
-                            wirelessTypeId: index
-                        })
-                    }))
-                } else if (wirelessType && !Array.isArray(wirelessType)) {
-                    await DeviceWirelessType.create({
-                        deviceId: device.id,
-                        wirelessTypeId: wirelessType
-                    })
-                }
-            } else {
-                await DeviceWirelessType.create({
-                    deviceId: device.id,
-                    wirelessTypeId: 1
-                })
             }
 
             return res.json(device)
@@ -266,7 +248,7 @@ class DeviceController {
                 brandId,
                 colorId,
                 deviceMaterialId,
-                wirelessTypeIds,
+                wirelessTypeId,
                 limit,
                 page,
                 priceFrom,
@@ -298,6 +280,10 @@ class DeviceController {
                 sortCondition = {...sortCondition, deviceMaterialId}
             }
 
+            if (wirelessTypeId) {
+                sortCondition = {...sortCondition, wirelessTypeId}
+            }
+
             let orderClause: Array<string | [string, string]> = ['id']
 
             if (priceFrom && !priceTo) {
@@ -307,7 +293,7 @@ class DeviceController {
                         [Op.gte]: Number(priceFrom)
                     }
                 };
-                orderClause = [['price', 'ASC']]
+                orderClause = [['devicePrice', 'ASC']]
             }
 
             if (priceTo && !priceFrom) {
@@ -317,7 +303,7 @@ class DeviceController {
                         [Op.lte]: Number(priceTo)
                     }
                 };
-                orderClause = [['price', 'ASC']]
+                orderClause = [['devicePrice', 'ASC']]
             }
 
             if (priceTo && priceFrom) {
@@ -327,7 +313,7 @@ class DeviceController {
                         [Op.between]: [Number(priceFrom), Number(priceTo)]
                     }
                 };
-                orderClause = [['price', 'ASC']]
+                orderClause = [['devicePrice', 'ASC']]
             }
 
             if (rating) {
@@ -340,49 +326,15 @@ class DeviceController {
                 orderClause = [['rating', 'DESC']]
             }
 
-            const wirelessTypeId = wirelessTypeIds ? JSON.parse(wirelessTypeIds) : undefined;
-            if (Array.isArray(wirelessTypeId) && wirelessTypeId.length > 0) {
-                devices = await Device.findAndCountAll({
-                    where: sortCondition,
-                    include: [
-                        {model: DeviceImage, as: 'images'},
-                        {
-                            model: WirelessType,
-                            through: {attributes: []},
-                            where: {id: {[Op.in]: wirelessTypeId}}
-                        }
-                    ],
-                    order: orderClause,
-                    limit,
-                    offset
-                })
-            } else if (wirelessTypeId && !Array.isArray(wirelessTypeId)) {
-                devices = await Device.findAndCountAll({
-                    where: sortCondition,
-                    include: [
-                        {model: DeviceImage, as: 'images'},
-                        {
-                            model: WirelessType,
-                            through: {attributes: []},
-                            where: {id: wirelessTypeId}
-                        }
-                    ],
-                    order: orderClause,
-                    limit,
-                    offset
-                })
-            } else {
-                devices = await Device.findAndCountAll({
-                    where: sortCondition,
-                    include: [
-                        {model: DeviceImage, as: 'images'},
-                    ],
-                    order: orderClause,
-                    limit,
-                    offset
-                })
-            }
-
+            devices = await Device.findAndCountAll({
+                where: sortCondition,
+                include: [
+                    {model: DeviceImage, as: 'images'},
+                ],
+                order: orderClause,
+                limit,
+                offset
+            })
 
             return res.json(devices)
         } catch (error) {

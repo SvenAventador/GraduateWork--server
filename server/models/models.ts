@@ -1,5 +1,5 @@
 const sequelize = require('./db')
-const { DataTypes } = require('sequelize')
+const {DataTypes} = require('sequelize')
 
 const User = sequelize.define('user', {
     id: {
@@ -58,6 +58,10 @@ const CartDevice = sequelize.define('cart_device', {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
+    },
+    amountDevice: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1
     }
 })
 
@@ -196,14 +200,6 @@ const WirelessType = sequelize.define('wireless_type', {
     },
 })
 
-const DeviceWirelessType = sequelize.define('device_wireless', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    }
-})
-
 const DeviceInfo = sequelize.define('device_info', {
     id: {
         type: DataTypes.INTEGER,
@@ -333,14 +329,14 @@ Device.belongsTo(Color)
 DeviceMaterial.hasMany(Device)
 Device.belongsTo(DeviceMaterial)
 
-Device.belongsToMany(WirelessType, {through: DeviceWirelessType})
-WirelessType.belongsToMany(Device, {through: DeviceWirelessType, as: 'wirelessTypeIds'})
+WirelessType.hasMany(Device)
+Device.belongsTo(WirelessType)
 
-Type.belongsToMany(Brand, {through: TypeBrand })
-Brand.belongsToMany(Type, {through: TypeBrand })
+Type.belongsToMany(Brand, {through: TypeBrand})
+Brand.belongsToMany(Type, {through: TypeBrand})
 
-DeliveryStatus.belongsToMany(PaymentStatus, { through: DeliveryPayment });
-PaymentStatus.belongsToMany(DeliveryStatus, { through: DeliveryPayment });
+DeliveryStatus.belongsToMany(PaymentStatus, {through: DeliveryPayment});
+PaymentStatus.belongsToMany(DeliveryStatus, {through: DeliveryPayment});
 
 module.exports = {
     User,
@@ -361,6 +357,5 @@ module.exports = {
     Color,
     DeviceMaterial,
     WirelessType,
-    DeviceWirelessType,
     FavouriteDevice
 }
