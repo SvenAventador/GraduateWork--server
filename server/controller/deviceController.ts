@@ -151,6 +151,8 @@ class DeviceController {
                         })
                     )
                 );
+            } else if (deviceImage.length <= 0) {
+                return next(ErrorHandler.conflict("Пожалуйста, добавьте хотя бы одно изображение устройства!"))
             }
 
             return res.json(device)
@@ -329,7 +331,7 @@ class DeviceController {
             devices = await Device.findAndCountAll({
                 where: sortCondition,
                 include: [
-                    {model: DeviceImage, as: 'images'},
+                    {model: DeviceImage, as: 'images', where: {isMainImage: true}},
                 ],
                 order: orderClause,
                 limit,

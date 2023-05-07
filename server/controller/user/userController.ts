@@ -68,10 +68,6 @@ class UserController {
              user.userRole)
 
          const token = SecondaryFunctions.generate_jwt(userDto as IUser)
-         res.cookie("token", token, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000
-         })
 
          return res.json({token})
       } catch (error) {
@@ -125,10 +121,6 @@ class UserController {
              user.userEmail,
              user.userRole)
          const token = SecondaryFunctions.generate_jwt(userDto as IUser)
-         res.cookie("token", token, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000
-         })
 
          return res.json({token})
       } catch (error) {
