@@ -44,15 +44,15 @@ class RatingController {
                 return next(ErrorHandler.badRequest(`Устройство с ID ${deviceId} не найдено!`))
             }
 
-            const candidate = await Rating.findOne({where: {userId, deviceId}})
+            const candidate = await Rating.findOne({ where: { userId, deviceId } })
             if (candidate) {
-                Device.update({rating: rate}, {where: {id: deviceId}}).then(() => {
-                    return res.status(200).json({message: "Рейтинг успешно обновлен!"})
-                })
+                await Rating.update({ rate }, { where: { id: candidate.id } })
+                return res.status(200).json({ message: "Оценка успешно обновлена!" })
             }
 
-            await Rating.create({rate, userId, deviceId})
-            return res.status(200).json({message: "Оценка успешно поставлена!"})
+            await Rating.create({ rate, userId, deviceId })
+            return res.status(200).json({ message: "Оценка успешно поставлена!" })
+
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }

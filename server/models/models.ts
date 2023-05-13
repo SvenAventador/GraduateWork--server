@@ -148,14 +148,6 @@ const Device = sequelize.define('device', {
     }
 })
 
-const FavouriteDevice = sequelize.define('favourite_device', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    }
-})
-
 const Color = sequelize.define('color', {
     id: {
         type: DataTypes.INTEGER,
@@ -308,12 +300,6 @@ OrderDevice.belongsTo(Device)
 Device.hasMany(DeviceInfo, {as: 'info'})
 DeviceInfo.belongsTo(Device)
 
-User.hasMany(FavouriteDevice)
-FavouriteDevice.belongsTo(User)
-
-Device.hasMany(FavouriteDevice)
-FavouriteDevice.belongsTo(Device)
-
 Device.hasMany(DeviceImage, {as: 'images'})
 DeviceImage.belongsTo(Device)
 
@@ -357,5 +343,4 @@ module.exports = {
     Color,
     DeviceMaterial,
     WirelessType,
-    FavouriteDevice
 }

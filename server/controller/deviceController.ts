@@ -4,14 +4,13 @@ import ErrorHandler from "../error/errorHandler";
 import path from 'path'
 import {UploadedFile} from "express-fileupload";
 import * as crypto from "crypto";
-import {Op} from "sequelize";
+import {Model, Op} from "sequelize";
 
 const {
     Device,
     DeviceInfo,
     DeviceImage,
     Rating,
-    FavouriteDevice
 } = require('../models/models')
 
 /**
@@ -44,6 +43,23 @@ interface IGetOneDeviceQueryParams {
     priceTo?: number;
     rating?: number;
     wirelessTypeId?: number;
+}
+
+/**
+ * Интерфейс на опции Include в Sequelize.
+ */
+interface IncludeOptions {
+    model: typeof Model;
+    as: string;
+    where?: object;
+}
+
+/**
+ * Поиск определнной опции Include.
+ */
+interface FindOneOptions {
+    where?: object;
+    include?: IncludeOptions[];
 }
 
 /**
@@ -162,41 +178,6 @@ class DeviceController {
     }
 
     /**
-     * Добавление устройства в избранное.
-     * @param req - запрос.
-     * @param res - ответ.
-     * @param next - переход к следующей функции.
-     */
-    async createFavourite(req: Request, res: Response, next: NextFunction) {
-        try {
-            const {userId, deviceId} = req.params
-
-            if ((!SecondaryFunctions.isNumber(userId)) || SecondaryFunctions.isEmpty(userId)) {
-                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
-            }
-
-            if ((!SecondaryFunctions.isNumber(deviceId)) || SecondaryFunctions.isEmpty(deviceId)) {
-                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
-            }
-
-            const candidate = await Device.findOne({where: {id: deviceId}})
-            if (!candidate) {
-                return next(ErrorHandler.notFound('Данное устройство не найдено в нашей системе!'))
-            }
-
-            const favouriteCandidate = await FavouriteDevice.findOne({where: {deviceId: deviceId}})
-            if (favouriteCandidate) {
-                return next(ErrorHandler.conflict('Данное устройство есть в списках избранных!'))
-            }
-
-            await FavouriteDevice.create({userId, deviceId})
-            return res.status(200).json({message: 'Товар успешно добавлен в список избранных!'})
-        } catch {
-            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
-        }
-    }
-
-    /**
      * Высчитывание средней оценки товара.
      * @param req - запрос.
      * @param res - ответ.
@@ -228,8 +209,8 @@ class DeviceController {
                 resultMark += marks[i]
             }
 
-            resultMark /= marks.length
-            Device.update({rating: resultMark}, {where: {id}}).then(() => {
+            resultMark = Math.round(resultMark / marks.length);
+            await Device.update({rating: +resultMark}, {where: {id}}).then(() => {
                 return res.status(200).json({message: "Рейтинг успешно обновлен!"})
             })
         } catch (error) {
@@ -338,7 +319,17 @@ class DeviceController {
                 offset
             })
 
-            return res.json(devices)
+            const allDevice = await Device.findAll()
+            const devicePrice = allDevice.map((device: any) => device.devicePrice)
+            const minPrice = Math.min(...devicePrice);
+            const maxPrice = Math.max(...devicePrice);
+
+            return res.json(
+                {
+                    devices,
+                    minPrice,
+                    maxPrice
+                })
         } catch (error) {
             return next(error)
         }
@@ -351,79 +342,40 @@ class DeviceController {
      * @param next - переход к следующей функции.
      */
     async getOne(req: Request, res: Response, next: NextFunction) {
-        const {id} = req.params
+        const { id } = req.params;
+        const { userId } = req.query;
 
-        if (!SecondaryFunctions.isNumber(id)) {
-            return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+        if (!SecondaryFunctions.isNumber(id) || SecondaryFunctions.isEmpty(id)) {
+            return next(ErrorHandler.badRequest('Некорректно указан идентификатор устройства!'))
         }
 
-        const device = await Device.findOne({
-            where: {id},
+        const options: FindOneOptions = {
+            where: { id },
             include: [
-                {model: DeviceInfo, as: 'info'},
-                {model: DeviceImage, as: 'images'},
-            ]
-        })
+                { model: DeviceInfo, as: 'info' },
+                { model: DeviceImage, as: 'images' }
+            ],
+        };
 
-        return res.json(device)
-    }
-
-    /**
-     * Удаление одного товара из списка избранных.
-     * @param req - запрос.
-     * @param res - ответ.
-     * @param next - переход к следующей функции.
-     */
-    async deleteFavourite(req: Request, res: Response, next: NextFunction) {
-        try {
-            const {userId, deviceId} = req.params
-
-            if ((!SecondaryFunctions.isNumber(userId)) || SecondaryFunctions.isEmpty(userId)) {
-                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
+        if (userId) {
+            if (!SecondaryFunctions.isNumber(userId) || SecondaryFunctions.isEmpty(userId)) {
+                return next(ErrorHandler.badRequest('Некорректно указан идентификатор пользователя!'))
             }
 
-            if ((!SecondaryFunctions.isNumber(deviceId)) || SecondaryFunctions.isEmpty(deviceId)) {
-                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
-            }
+            const candidate = await Rating.findOne({
+                where: {
+                    deviceId: id,
+                    userId: userId
+                }
+            })
 
-            const candidate = await FavouriteDevice.findOne({where: {userId, deviceId}})
             if (candidate) {
-                await candidate.destroy()
-                return res.status(200).json({message: 'Товар успешно удален из списка избранных товаров!'})
-            } else {
-                return next(ErrorHandler.badRequest('Данный товар не найден в списке избраных!'))
+                options.include!.push({ model: Rating, as: 'ratings', where: { deviceId: id, userId } });
             }
-        } catch {
-            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
-    }
 
-    /**
-     * Очистка списка избранных.
-     * @param req - запрос.
-     * @param res - ответ.
-     * @param next - переход к следующей функции.
-     */
-    async deleteAllFavourite(req: Request, res: Response, next: NextFunction) {
-        try {
-            const {userId} = req.params
-
-            if ((!SecondaryFunctions.isNumber(userId)) || SecondaryFunctions.isEmpty(userId)) {
-                return next(ErrorHandler.badRequest('Некорректный идентификатор пользователя!'))
-            }
-
-            const candidate = await FavouriteDevice.findAll({where: {userId}})
-            if (candidate.length === 0) {
-                return res.status(301).json({message: 'Ваш список избранных пустой!'})
-            } else {
-                candidate.map((item: any) => {
-                    item.destroy()
-                    return res.status(200).json({message: 'Ваш список избранных был очищен!'})
-                })
-            }
-        } catch {
-            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
-        }
+        const device = await Device.findOne(options);
+        return res.json(device);
     }
 }
 

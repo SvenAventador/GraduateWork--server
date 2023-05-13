@@ -1,7 +1,6 @@
 import {NextFunction, Request, Response} from "express";
 import SecondaryFunctions from "../functions/secondaryFunctions";
 import ErrorHandler from "../error/errorHandler";
-
 const {Color} = require('../models/models')
 
 /**

@@ -1,8 +1,10 @@
 import {NextFunction, Request, Response} from "express";
 import SecondaryFunctions from "../functions/secondaryFunctions";
 import ErrorHandler from "../error/errorHandler";
+import {Model} from "sequelize";
 
 const {Cart, Device, CartDevice, DeviceImage} = require('../models/models')
+
 /**
  * Корзина пользователя.
  */
@@ -52,7 +54,18 @@ class CartController {
             const device = []
 
             for (let i = 0; i < deviceItem.length; i++) {
-                const devices = await Device.findOne({where: {id: deviceItem[i]}, include: {model: DeviceImage, as: 'images'}})
+                const devices = await Device.findOne({
+                    where: {id: deviceItem[i]},
+                    include: [{
+                        model: DeviceImage, as: 'images',
+                        where: {
+                            isMainImage: true
+                        }
+                    }, {
+                        model: CartDevice,
+                        where: {cartId: id, deviceId: deviceItem[i]}
+                    }]
+                })
                 device.push(devices.dataValues)
             }
 
@@ -90,7 +103,7 @@ class CartController {
                 return next(ErrorHandler.badRequest(`Устройство с ID ${deviceId} не найдено!`))
             }
 
-            const candidate = await CartDevice.findOne({where: deviceId})
+            const candidate = await CartDevice.findOne({where: {cartId, deviceId}})
             if (candidate) {
                 await candidate.update({amountDevice: candidate.amountDevice + 1})
                 return res.json({message: `Товар обновил свое количество, новое количество ${candidate.amountDevice}`})
