@@ -19,11 +19,11 @@ class ColorController {
             const {colorName, hexValue} = req.body
 
             if (!SecondaryFunctions.isString(colorName) || SecondaryFunctions.isEmpty(colorName)) {
-                return next(ErrorHandler.badRequest('Неправильный парметр запроса!'))
+                return next(ErrorHandler.badRequest('Некорректное название цвета!'))
             }
 
             if (!SecondaryFunctions.isString(hexValue) || SecondaryFunctions.isEmpty(hexValue)) {
-                return next(ErrorHandler.badRequest('Неправильный парметр запроса!'))
+                return next(ErrorHandler.badRequest('Некорректное хеш-значение цвета!'))
             }
 
             const firstVariant = /^#[\d\w]{6}$/;

@@ -17,12 +17,12 @@ class WirelessTypeController {
             const {typeName} = req.body
 
             if (!SecondaryFunctions.isString(typeName) && SecondaryFunctions.isEmpty(typeName)) {
-                return next(ErrorHandler.badRequest('Неправильный тип запроса!'))
+                return next(ErrorHandler.badRequest('Некорректное название беспроводного устройства!'))
             }
 
             const candidate = await WirelessType.findOne({where: {typeName}})
             if (candidate) {
-                return next(ErrorHandler.conflict("Такое имя уже есть в системе!"))
+                return next(ErrorHandler.conflict("Такое название уже есть в системе!"))
             }
 
             const type = await WirelessType.create({typeName})

@@ -20,12 +20,12 @@ class TypeController {
 
             if (!(SecondaryFunctions.isString(typeName)) &&
                 (SecondaryFunctions.isEmpty(typeName))) {
-                return next(ErrorHandler.badRequest("Неправильный параметр запроса!"))
+                return next(ErrorHandler.badRequest("Некорректное название типа устройства!"))
             }
 
             const candidate = await Type.findOne({where: {typeName}})
             if (candidate) {
-                return next(ErrorHandler.conflict("Данное имя уже имеется в системе!"))
+                return next(ErrorHandler.conflict("Данный тип уже имеется в системе!"))
             }
 
             const type = await Type.create({typeName})

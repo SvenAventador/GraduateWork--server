@@ -7,6 +7,7 @@ import DeviceController from "../controller/deviceController";
 routes.post('/', DeviceController.create)
 routes.put('/:id', DeviceController.calculateMark)
 routes.get('/', DeviceController.getAll)
+routes.get('/search', DeviceController.searchGoods)
 routes.get('/:id', DeviceController.getOne)
 
 export default routes

@@ -1,9 +1,13 @@
 import {NextFunction, Request, Response} from "express";
 import SecondaryFunctions from "../functions/secondaryFunctions";
 import ErrorHandler from "../error/errorHandler";
-import {Model} from "sequelize";
 
-const {Cart, Device, CartDevice, DeviceImage} = require('../models/models')
+const {
+    Cart,
+    Device,
+    CartDevice,
+    DeviceImage
+} = require('../models/models')
 
 /**
  * Корзина пользователя.
@@ -21,7 +25,7 @@ class CartController {
             const {id} = req.params
 
             if (!SecondaryFunctions.isNumber(id)) {
-                return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+                return next(ErrorHandler.badRequest("Некорректный идентификатор корзины!"))
             }
 
             const cart = await Cart.findOne({where: {id}})
@@ -43,6 +47,10 @@ class CartController {
     async getAllGoods(req: Request, res: Response, next: NextFunction) {
         try {
             const {id} = req.params
+
+            if (!SecondaryFunctions.isNumber(id) || SecondaryFunctions.isEmpty(id)) {
+                return next(ErrorHandler.badRequest("Некорректный идентификатор коризны!"))
+            }
             const cart_device = await CartDevice.findAll({where: {cartId: id}})
 
             if (!cart_device) {
@@ -85,12 +93,12 @@ class CartController {
         try {
             const {cartId, deviceId} = req.body
 
-            if (!SecondaryFunctions.isNumber(cartId)) {
-                return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+            if (!SecondaryFunctions.isNumber(cartId) || SecondaryFunctions.isEmpty(cartId)) {
+                return next(ErrorHandler.badRequest("Некорректный идентфиикатор корзины!"))
             }
 
-            if (!SecondaryFunctions.isNumber(deviceId)) {
-                return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+            if (!SecondaryFunctions.isNumber(deviceId) || SecondaryFunctions.isEmpty(deviceId)) {
+                return next(ErrorHandler.badRequest("Некорректный идентификатор устройства!"))
             }
 
             const cartCandidate = await Cart.findOne({where: {id: cartId}})
@@ -106,7 +114,7 @@ class CartController {
             const candidate = await CartDevice.findOne({where: {cartId, deviceId}})
             if (candidate) {
                 await candidate.update({amountDevice: candidate.amountDevice + 1})
-                return res.json({message: `Товар обновил свое количество, новое количество ${candidate.amountDevice}`})
+                return res.json({message: "Товар успешно добавлен в корзину!"})
             }
 
             await CartDevice.create({cartId, deviceId})
@@ -126,12 +134,12 @@ class CartController {
         try {
             const {cartId, deviceId} = req.params
 
-            if (!SecondaryFunctions.isNumber(cartId)) {
-                return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+            if (!SecondaryFunctions.isNumber(cartId) || SecondaryFunctions.isEmpty(cartId)) {
+                return next(ErrorHandler.badRequest("Некорректный идентификатор корзины!"))
             }
 
-            if (!SecondaryFunctions.isNumber(deviceId)) {
-                return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+            if (!SecondaryFunctions.isNumber(deviceId) || SecondaryFunctions.isEmpty(deviceId)) {
+                return next(ErrorHandler.badRequest("Некорректный идентификатор устройства!"))
             }
 
             const cartCandidate = await Cart.findOne({where: {id: cartId}})
@@ -152,7 +160,7 @@ class CartController {
     }
 
     /**
-     * Очистка корзины..
+     * Очистка корзины.
      * @param req - запрос.
      * @param res - ответ.
      * @param next - переход к следующей функции.
@@ -161,8 +169,8 @@ class CartController {
         try {
             const {cartId} = req.params
 
-            if (!SecondaryFunctions.isNumber(cartId)) {
-                return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+            if (!SecondaryFunctions.isNumber(cartId) || SecondaryFunctions.isEmpty(cartId)) {
+                return next(ErrorHandler.badRequest("Некорректный параметр запроса!"))
             }
 
             const candidate = await CartDevice.findAll({where: {cartId}})
@@ -173,7 +181,7 @@ class CartController {
                 candidate.map((item: any) => {
                     item.destroy()
                 })
-                return res.status(200).json({message: "Оплата товаров прошла успешно!"});
+                return res.status(200).json({message: "Корзина успешно очищена!"});
             }
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))

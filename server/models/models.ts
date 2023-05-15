@@ -27,10 +27,6 @@ const User = sequelize.define('user', {
         defaultValue: "USER"
     },
 
-    userImage: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
     userFio: {
         type: DataTypes.STRING,
         allowNull: true
@@ -74,6 +70,10 @@ const Order = sequelize.define('order', {
     dateOrder: {
         type: DataTypes.DATEONLY,
         defaultValue: Date.now()
+    },
+    orderPrice: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 })
 

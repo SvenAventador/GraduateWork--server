@@ -4,7 +4,7 @@ import ErrorHandler from "../error/errorHandler";
 import path from 'path'
 import {UploadedFile} from "express-fileupload";
 import * as crypto from "crypto";
-import {Model, Op} from "sequelize";
+import {Model, Op, Sequelize} from "sequelize";
 
 const {
     Device,
@@ -172,8 +172,8 @@ class DeviceController {
             }
 
             return res.json(device)
-        } catch (error) {
-            return next(error)
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
     }
 
@@ -187,8 +187,8 @@ class DeviceController {
         try {
             const {id} = req.params
 
-            if (!SecondaryFunctions.isNumber(id)) {
-                return next(ErrorHandler.badRequest("Неверный параметр запроса"))
+            if (!SecondaryFunctions.isNumber(id) || SecondaryFunctions.isEmpty(id)) {
+                return next(ErrorHandler.badRequest("Некорректное название идентификатора устройства!"))
             }
 
             const deviceCandidate = await Device.findOne({where: {id: id}})
@@ -213,8 +213,8 @@ class DeviceController {
             await Device.update({rating: +resultMark}, {where: {id}}).then(() => {
                 return res.status(200).json({message: "Рейтинг успешно обновлен!"})
             })
-        } catch (error) {
-            return next(error)
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
     }
 
@@ -330,8 +330,8 @@ class DeviceController {
                     minPrice,
                     maxPrice
                 })
-        } catch (error) {
-            return next(error)
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
     }
 
@@ -342,40 +342,67 @@ class DeviceController {
      * @param next - переход к следующей функции.
      */
     async getOne(req: Request, res: Response, next: NextFunction) {
-        const { id } = req.params;
-        const { userId } = req.query;
+        try {
+            const {id} = req.params;
+            const {userId} = req.query;
 
-        if (!SecondaryFunctions.isNumber(id) || SecondaryFunctions.isEmpty(id)) {
-            return next(ErrorHandler.badRequest('Некорректно указан идентификатор устройства!'))
-        }
-
-        const options: FindOneOptions = {
-            where: { id },
-            include: [
-                { model: DeviceInfo, as: 'info' },
-                { model: DeviceImage, as: 'images' }
-            ],
-        };
-
-        if (userId) {
-            if (!SecondaryFunctions.isNumber(userId) || SecondaryFunctions.isEmpty(userId)) {
-                return next(ErrorHandler.badRequest('Некорректно указан идентификатор пользователя!'))
+            if (!SecondaryFunctions.isNumber(id) || SecondaryFunctions.isEmpty(id)) {
+                return next(ErrorHandler.badRequest('Некорректно указан идентификатор устройства!'))
             }
 
-            const candidate = await Rating.findOne({
-                where: {
-                    deviceId: id,
-                    userId: userId
+            const options: FindOneOptions = {
+                where: {id},
+                include: [
+                    {model: DeviceInfo, as: 'info'},
+                    {model: DeviceImage, as: 'images'}
+                ],
+            };
+
+            if (userId) {
+                if (!SecondaryFunctions.isNumber(userId) || SecondaryFunctions.isEmpty(userId)) {
+                    return next(ErrorHandler.badRequest('Некорректно указан идентификатор пользователя!'))
                 }
-            })
 
-            if (candidate) {
-                options.include!.push({ model: Rating, as: 'ratings', where: { deviceId: id, userId } });
+                const candidate = await Rating.findOne({
+                    where: {
+                        deviceId: id,
+                        userId: userId
+                    }
+                })
+
+                if (candidate) {
+                    options.include!.push({model: Rating, as: 'ratings', where: {deviceId: id, userId}});
+                }
             }
-        }
 
-        const device = await Device.findOne(options);
-        return res.json(device);
+            const device = await Device.findOne(options);
+            return res.json(device);
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
+    }
+
+    /**
+     * Поиск товаров.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async searchGoods(req: Request, res: Response, next: NextFunction) {
+        const {deviceName} = req.query
+
+        const devices = await Device.findAndCountAll({
+            where: {
+                deviceName: {
+                    [Op.iLike]: `%${deviceName}%`
+                }
+            },
+            include: [
+                {model: DeviceImage, as: 'images', where: {isMainImage: true}},
+            ],
+        })
+
+        res.json({devices})
     }
 }
 

@@ -20,12 +20,12 @@ class DeviceController {
             const {materialName} = req.body
 
             if (!SecondaryFunctions.isString(materialName) || SecondaryFunctions.isEmpty(materialName)) {
-                return next(ErrorHandler.badRequest('Неправильный парметр запроса!'))
+                return next(ErrorHandler.badRequest('Некорректное название материала корпуса устройства!'))
             }
 
             const candidate = await DeviceMaterial.findOne({where: {materialName}})
             if (candidate) {
-                return next(ErrorHandler.conflict('Данный цвет уже создан!'))
+                return next(ErrorHandler.conflict('Данное название материала корпуса устройства уже существует в нашей системе!'))
             }
 
             const material = await DeviceMaterial.create({

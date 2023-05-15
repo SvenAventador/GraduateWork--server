@@ -5,6 +5,9 @@ export interface IUser {
     userName: string;
     userEmail: string;
     userRole: string;
+    userFio: string | null;
+    userAddress: string | null;
+    userPhone: string | null;
 }
 
 class SecondaryFunctions {
@@ -26,7 +29,7 @@ class SecondaryFunctions {
      */
     static isEmpty(value: unknown): boolean {
         return this.isString(value) &&
-               value.trim().length === 0
+            value.trim().length === 0
     }
 
     /**
@@ -74,7 +77,7 @@ class SecondaryFunctions {
      * @returns {boolean} - true - валидный пароль / false - не валидный пароль.
      */
     static validatePassword(password: unknown): boolean {
-        const regex =  /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
+        const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
 
         if (!this.isEmpty(password) && this.isString(password))
             return regex.test(password)
@@ -99,8 +102,24 @@ class SecondaryFunctions {
      * @param user - объект пользователя.
      */
     static generate_jwt = (user: IUser): string => {
-        const {id, userName, userEmail, userRole} = user;
-        const payload = {id, userName, userEmail, userRole};
+        const {
+            id,
+            userName,
+            userEmail,
+            userRole,
+            userFio,
+            userAddress,
+            userPhone
+        } = user;
+        const payload = {
+            id,
+            userName,
+            userEmail,
+            userRole,
+            userFio,
+            userAddress,
+            userPhone
+        };
         return jwt.sign(
             payload,
             process.env.JWT_SECRET_KEY!,

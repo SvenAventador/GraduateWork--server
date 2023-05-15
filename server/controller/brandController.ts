@@ -1,7 +1,9 @@
 import {NextFunction, Request, Response} from "express";
 import SecondaryFunctions from "../functions/secondaryFunctions";
 import ErrorHandler from "../error/errorHandler";
+
 const {Brand} = require('../models/models');
+
 /**
  * Бренды магазина.
  */
@@ -19,7 +21,7 @@ class BrandController {
 
             if (!(SecondaryFunctions.isString(brandName)) &&
                 (SecondaryFunctions.isEmpty(brandName))) {
-                return next(ErrorHandler.badRequest("Неправильный параметр запроса!"))
+                return next(ErrorHandler.badRequest("Некорректное название бренда устройства!"))
             }
 
             const candidate = await Brand.findOne({where: {brandName}})
@@ -29,8 +31,8 @@ class BrandController {
 
             const brand = await Brand.create({brandName})
             return res.json(brand)
-        } catch (error) {
-            return next(error)
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
     }
 
@@ -44,8 +46,8 @@ class BrandController {
         try {
             const brands = await Brand.findAll()
             return res.json(brands)
-        } catch (error) {
-            return next(error)
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
     }
 
@@ -58,20 +60,24 @@ class BrandController {
     async getOne(req: Request, res: Response, next: NextFunction) {
         const {id} = req.params
 
+        if (!SecondaryFunctions.isNumber(id) || SecondaryFunctions.isEmpty(id)) {
+            return next(ErrorHandler.badRequest("Некорректный идентификатор бренда устройства!"))
+        }
+
         await Brand.findOne({where: {id}})
-                   .then((brand: object) => {
-                            if (!brand) {
-                                return next(ErrorHandler.badRequest(`Бренд с ID равным ${id} не найден!`));
-                            }
-                            return res.json(brand)
-                   })
-                   .catch((error: unknown) => {
-                            if (error instanceof Error) {
-                                return next(ErrorHandler.internal("Необработанная ошибка!"))
-                            } else {
-                                return next(ErrorHandler.internal("Неизвестная ошибка!"))
-                            }
-                   })
+            .then((brand: object) => {
+                if (!brand) {
+                    return next(ErrorHandler.badRequest(`Бренд с ID равным ${id} не найден!`));
+                }
+                return res.json(brand)
+            })
+            .catch((error: unknown) => {
+                if (error instanceof Error) {
+                    return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+                } else {
+                    return next(ErrorHandler.internal("Неизвестная ошибка!"))
+                }
+            })
     }
 }
 
