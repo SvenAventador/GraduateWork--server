@@ -140,7 +140,10 @@ class UserController {
         const userDto = new UserDto(req.user.id,
             req.user.userName,
             req.user.userEmail,
-            req.user.userRole)
+            req.user.userRole,
+            req.user.userFio,
+            req.user.userAddress,
+            req.user.userPhone)
         const token = SecondaryFunctions.generate_jwt(userDto as IUser)
 
         return res.json({token})

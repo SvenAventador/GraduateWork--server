@@ -6,6 +6,8 @@ import BrandController from "../controller/brandController";
 
 routes.post('/', BrandController.create)
 routes.get('/', BrandController.getAll)
+routes.put('/', BrandController.updateBrand)
 routes.get('/:id', BrandController.getOne)
+routes.delete('/', BrandController.deleteBrand)
 
 export default routes

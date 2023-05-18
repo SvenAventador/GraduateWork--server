@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from "express";
 import SecondaryFunctions from "../functions/secondaryFunctions";
 import ErrorHandler from "../error/errorHandler";
-const {Color} = require('../models/models')
+const {Color, Device} = require('../models/models')
 
 /**
  * Цвета устройств.
@@ -42,11 +42,12 @@ class ColorController {
                 return next(ErrorHandler.conflict('Данный цвет уже создан!'))
             }
 
-            const color = await Color.create({
+            await Color.create({
                 colorName,
                 hexValue
             })
 
+            const color = await Color.findAll(({order: [['id', 'order']]}))
             return res.json(color)
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
@@ -63,6 +64,89 @@ class ColorController {
         try {
             const color = await Color.findAll()
             return res.json(color)
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
+    }
+
+    /**
+     * Обновление цвета устройства.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async updateColor(req: Request, res: Response, next: NextFunction) {
+        const {id, colorName, hexValue} = req.body
+
+        const firstVariant = /^#[\d\w]{6}$/;
+        const secondVariant = /^#[\d\w]{3}$/
+
+        try {
+            if (!SecondaryFunctions.isNumber(id) || SecondaryFunctions.isEmpty(id)) {
+                return next(ErrorHandler.badRequest('Некорректный идентификатор цвета устройства!'))
+            }
+
+            if (!SecondaryFunctions.isString(colorName) || SecondaryFunctions.isEmpty(colorName)) {
+                return next(ErrorHandler.badRequest('Некорректное название цвета устройства!'))
+            }
+
+            if (!SecondaryFunctions.isString(hexValue) || SecondaryFunctions.isEmpty(hexValue)) {
+                return next(ErrorHandler.badRequest('Некорректное название hex-значения цвета устройства!'))
+            }
+
+            if (!firstVariant.test(hexValue) && !secondVariant.test(hexValue)) {
+                return next(ErrorHandler.conflict('Формат данного параметра должен быть следующим: "#______" либо "#___"'))
+            }
+
+            const candidate = await Color.findOne({where: {colorName, hexValue}})
+            if (!candidate) {
+                return next(ErrorHandler.badRequest('Такого цвета устройства не найдено в системе!'))
+            }
+
+            if (((colorName !== candidate.colorName) && await Color.findOne({where: {colorName}}))) {
+                return next(ErrorHandler.badRequest('Данное название цвета устройства уже присутствует в системе!'))
+            }
+
+            if (((hexValue !== candidate.hexValue) && await Color.findOne({where: {hexValue}}))) {
+                return next(ErrorHandler.badRequest('Данное название цвета устройства уже присутствует в системе!'))
+            }
+
+            await candidate.update({colorName: colorName, hexValue: hexValue})
+            return res.status(200).json({message: 'Данные успешно изменены!'})
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
+    }
+
+    /**
+     * Удаление цвета устройств.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async deleteMaterial(req: Request, res: Response, next: NextFunction) {
+        const {id} = req.body
+
+        try {
+
+            const candidate = await Color.findOne({where: {id}})
+            if (!candidate) {
+                return next(ErrorHandler.badRequest('Такого цвета не найдено в системе!'))
+            }
+
+            const deviceCandidate = await Device.findAll({where: {colorId: id}})
+            if (deviceCandidate.length === 0) {
+                console.log("Устройств с данным типом не найдено!")
+            } else {
+                deviceCandidate.map((item: any) => {
+                    item.destroy()
+                    console.log("Устройства успешно удалены!")
+                })
+            }
+
+            await candidate.destroy()
+            const colors = await Color.findAll({order: [['id', 'asc']]})
+            return res.json(colors)
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }

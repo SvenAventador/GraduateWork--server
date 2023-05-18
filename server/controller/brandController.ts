@@ -2,7 +2,7 @@ import {NextFunction, Request, Response} from "express";
 import SecondaryFunctions from "../functions/secondaryFunctions";
 import ErrorHandler from "../error/errorHandler";
 
-const {Brand} = require('../models/models');
+const {Brand, Device} = require('../models/models');
 
 /**
  * Бренды магазина.
@@ -29,8 +29,9 @@ class BrandController {
                 return next(ErrorHandler.conflict("Данное имя уже имеется в системе!"))
             }
 
-            const brand = await Brand.create({brandName})
-            return res.json(brand)
+            await Brand.create({brandName})
+            const brands = await Brand.findAll({order: [['id', 'asc']]})
+            return res.json(brands)
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
@@ -44,7 +45,7 @@ class BrandController {
      */
     async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const brands = await Brand.findAll()
+            const brands = await Brand.findAll({order: [['id', 'asc']]})
             return res.json(brands)
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
@@ -78,6 +79,74 @@ class BrandController {
                     return next(ErrorHandler.internal("Неизвестная ошибка!"))
                 }
             })
+    }
+
+    /**
+     * Обновление бренда устройств.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async updateBrand(req: Request, res: Response, next: NextFunction) {
+        const {id, brandName} = req.body
+
+        try {
+            if (!SecondaryFunctions.isNumber(id) || SecondaryFunctions.isEmpty(id)) {
+                return next(ErrorHandler.badRequest('Некорректный идентификатор бренда устройства!'))
+            }
+
+            if (!SecondaryFunctions.isString(brandName) || SecondaryFunctions.isEmpty(brandName)) {
+                return next(ErrorHandler.badRequest('Некорректное название бренда устройства!'))
+            }
+
+            const candidate = await Brand.findOne({where: {id}})
+            if (!candidate) {
+                return next(ErrorHandler.badRequest('Такого бренда устройства не найдено в системе!'))
+            }
+
+            if ((brandName !== candidate.brandName) && await Brand.findOne({where: {brandName}})) {
+                return next(ErrorHandler.badRequest('Данное название бренда устройства уже присутствует в системе!'))
+            }
+
+            await candidate.update({brandName: brandName})
+            return res.status(200).json({message: 'Данные успешно изменены!'})
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
+    }
+
+    /**
+     * Удаление бренда устройств.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async deleteBrand(req: Request, res: Response, next: NextFunction) {
+        const {id} = req.body
+
+        try {
+
+            const candidate = await Brand.findOne({where: {id}})
+            if (!candidate) {
+                return next(ErrorHandler.badRequest('Такого бренда не найдено в системе!'))
+            }
+
+            const deviceCandidate = await Device.findAll({where: {brandId: id}})
+            if (deviceCandidate.length === 0) {
+                console.log("Устройств с данным типом не найдено!")
+            } else {
+                deviceCandidate.map((item: any) => {
+                    item.destroy()
+                    console.log("Устройства успешно удалены!")
+                })
+            }
+
+            await candidate.destroy()
+            const brands = await Brand.findAll({order: [['id', 'asc']]})
+            return res.json(brands)
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
     }
 }
 
