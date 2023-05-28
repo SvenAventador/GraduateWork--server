@@ -103,14 +103,6 @@ const PaymentStatus = sequelize.define('payment_status', {
     }
 })
 
-const DeliveryPayment = sequelize.define('delivery_payment', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    }
-})
-
 const Rating = sequelize.define('rating', {
     id: {
         type: DataTypes.INTEGER,
@@ -321,9 +313,6 @@ Device.belongsTo(WirelessType)
 Type.belongsToMany(Brand, {through: TypeBrand})
 Brand.belongsToMany(Type, {through: TypeBrand})
 
-DeliveryStatus.belongsToMany(PaymentStatus, {through: DeliveryPayment});
-PaymentStatus.belongsToMany(DeliveryStatus, {through: DeliveryPayment});
-
 module.exports = {
     User,
     Cart,
@@ -339,7 +328,6 @@ module.exports = {
     Brand,
     DeviceImage,
     TypeBrand,
-    DeliveryPayment,
     Color,
     DeviceMaterial,
     WirelessType,

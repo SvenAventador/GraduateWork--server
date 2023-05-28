@@ -172,6 +172,21 @@ class OrderController {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
     }
+
+    /**
+     * Получение всей выручки
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async getAllPrice (req:Request, res:Response, next: NextFunction) {
+        const orders = await Order.findAll()
+        let totalCost = 0
+        orders.map((item: any) => {
+            totalCost += item.orderPrice
+        })
+        return res.json(totalCost)
+    }
 }
 
 export default new OrderController()

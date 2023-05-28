@@ -7,6 +7,6 @@ import ColorController from "../controller/colorController";
 routes.get('/', ColorController.getAll)
 routes.post('/', ColorController.create)
 routes.put('/', ColorController.updateColor)
-routes.delete('/', ColorController.deleteMaterial)
+routes.delete('/', ColorController.deleteColor)
 
 export default routes

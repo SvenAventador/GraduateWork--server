@@ -4,7 +4,7 @@ import ErrorHandler from "../error/errorHandler";
 import path from 'path'
 import {UploadedFile} from "express-fileupload";
 import * as crypto from "crypto";
-import {Model, Op, Sequelize} from "sequelize";
+import {Model, Op} from "sequelize";
 
 const {
     Device,
@@ -42,6 +42,21 @@ interface IGetOneDeviceQueryParams {
     priceFrom?: number;
     priceTo?: number;
     rating?: number;
+    wirelessTypeId?: number;
+}
+
+/**
+ * Интерфейс для параметров запроса на изменение данных устройства.
+ */
+interface IUpdateDeviceParams {
+    id?: number;
+    deviceName?: number;
+    devicePrice?: number;
+    deviceDescription?: number;
+    typeId?: number;
+    brandId?: number;
+    colorId?: number;
+    deviceMaterialId?: number;
     wirelessTypeId?: number;
 }
 
@@ -310,7 +325,9 @@ class DeviceController {
             }
 
             devices = await Device.findAndCountAll({
-                where: sortCondition,
+                where: {
+                    ...sortCondition
+                },
                 include: [
                     {model: DeviceImage, as: 'images', where: {isMainImage: true}},
                 ],
@@ -330,6 +347,26 @@ class DeviceController {
                     minPrice,
                     maxPrice
                 })
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
+    }
+
+    /**
+     * Получение всех товаров.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async getAdminAllDevice(req: Request, res: Response, next: NextFunction) {
+        try {
+            const devices = await Device.findAll({
+                include: [
+                    {model: DeviceImage, as: 'images'},
+                ],
+                order: [['id', 'asc']]
+            })
+            return res.json(devices)
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
@@ -383,26 +420,149 @@ class DeviceController {
     }
 
     /**
-     * Поиск товаров.
+     * Обновление одного товара.
      * @param req - запрос.
      * @param res - ответ.
      * @param next - переход к следующей функции.
      */
-    async searchGoods(req: Request, res: Response, next: NextFunction) {
-        const {deviceName} = req.query
+    async update(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {
+                id,
+                deviceName,
+                devicePrice,
+                deviceDescription,
+                typeId,
+                brandId,
+                colorId,
+                deviceMaterialId,
+                wirelessTypeId
+            }: IUpdateDeviceParams = req.body;
 
-        const devices = await Device.findAndCountAll({
-            where: {
-                deviceName: {
-                    [Op.iLike]: `%${deviceName}%`
-                }
-            },
-            include: [
-                {model: DeviceImage, as: 'images', where: {isMainImage: true}},
-            ],
-        })
+            if ((!SecondaryFunctions.isString(deviceName)) || SecondaryFunctions.isEmpty(deviceName)) {
+                return next(ErrorHandler.badRequest('Название товара должно быть в строковой формате и не может быть пустым!'))
+            }
 
-        res.json({devices})
+            if (!(SecondaryFunctions.isNumber(devicePrice)) || (SecondaryFunctions.isEmpty(devicePrice))) {
+                return next(ErrorHandler.badRequest('Цена товара должна быть указана в числовом формате и не может быть пустой!'))
+            }
+
+            if (!(SecondaryFunctions.isNumber(typeId)) || (SecondaryFunctions.isEmpty(typeId))) {
+                return next(ErrorHandler.badRequest('ID типа должно быть указано в числовом формате и не может быть пустым!'))
+            }
+
+            if (!(SecondaryFunctions.isNumber(brandId)) || (SecondaryFunctions.isEmpty(brandId))) {
+                return next(ErrorHandler.badRequest('ID бренда должно быть указано в числовом формате и не может быть пустым!'))
+            }
+
+            if (!(SecondaryFunctions.isNumber(colorId)) || (SecondaryFunctions.isEmpty(colorId))) {
+                return next(ErrorHandler.badRequest('ID цвета должно быть указано в числовом формате и не может быть пустым!'))
+            }
+
+            if (!(SecondaryFunctions.isNumber(deviceMaterialId)) || (SecondaryFunctions.isEmpty(deviceMaterialId))) {
+                return next(ErrorHandler.badRequest('ID материала корпуса должно быть указано в числовом формате и не может быть пустым!'))
+            }
+
+            if (!(SecondaryFunctions.isNumber(wirelessTypeId)) || (SecondaryFunctions.isEmpty(wirelessTypeId))) {
+                return next(ErrorHandler.badRequest('ID беспроводного устройства должно быть указано в числовом формате и не может быть пустым!'))
+            }
+
+            const device = await Device.findOne({where: {id}})
+
+            if (!device) {
+                return next(ErrorHandler.notFound('Устройство не найдено!'));
+            }
+
+            if ((deviceName != device.deviceName) && await Device.findOne({where: {deviceName}})) {
+                return next(ErrorHandler.badRequest("Данное название устройства уже есть в системе!"))
+            }
+
+            await device.update({
+                deviceName,
+                devicePrice,
+                deviceDescription,
+                typeId,
+                brandId,
+                colorId,
+                deviceMaterialId,
+                wirelessTypeId
+            });
+
+            return res.json(device);
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
+    }
+
+    /**
+     * Удаление одного товара.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async delete(req: Request, res: Response, next: NextFunction) {
+        const {id} = req.body
+
+        try {
+            const candidate = await Device.findOne({where: {id}})
+            if (!candidate) {
+                return next(ErrorHandler.badRequest('Такого типа не найдено в системе!'))
+            }
+
+            const infoCandidate = await DeviceInfo.findAll({where: {deviceId: id}})
+            if (infoCandidate.length === 0) {
+                console.log('У устройства нет характеристик!')
+            } else {
+                infoCandidate.map((item: any) => {
+                    item.destroy()
+                })
+            }
+
+            const imageCandidate = await DeviceImage.findAll({where: {deviceId: id}})
+            if (imageCandidate.length === 0) {
+                console.log('У устройства нет характеристик!')
+            } else {
+                imageCandidate.map((item: any) => {
+                    item.destroy()
+                })
+            }
+            await candidate.destroy()
+            const device = await Device.findAll({order: [['id', 'asc']]})
+            return res.json(device)
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
+    }
+
+    /**
+     * Получение устройств с каждым рейтингом.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async getCountWithRating (req: Request, res: Response, next: NextFunction) {
+        const devices = await Device.findAll({
+            attributes: ['rating'],
+            raw: true,
+        });
+
+        const ratingCounts: Record<number, number> = {
+            5: 0,
+            4: 0,
+            3: 0,
+            2: 0,
+            1: 0,
+            0: 0,
+        };
+
+        devices.forEach((device: any) => {
+            const rating = device.rating;
+            if (rating in ratingCounts) {
+                ratingCounts[rating]++;
+            }
+        });
+
+        return res.json(ratingCounts);
     }
 }
 

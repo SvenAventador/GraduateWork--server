@@ -6,6 +6,7 @@ import UserController from "../controller/user/userController";
 import authMiddleware from "../middleware/user/authMiddleware";
 
 routes.post('/registration', UserController.registration)
+routes.get('/withOrder', UserController.getCountAllOrder)
 routes.post('/login', UserController.login)
 routes.put('/update/:id', UserController.update)
 routes.get('/auth', authMiddleware, UserController.check)

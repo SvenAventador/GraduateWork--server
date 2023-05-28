@@ -125,20 +125,9 @@ class BrandController {
         const {id} = req.body
 
         try {
-
             const candidate = await Brand.findOne({where: {id}})
             if (!candidate) {
                 return next(ErrorHandler.badRequest('Такого бренда не найдено в системе!'))
-            }
-
-            const deviceCandidate = await Device.findAll({where: {brandId: id}})
-            if (deviceCandidate.length === 0) {
-                console.log("Устройств с данным типом не найдено!")
-            } else {
-                deviceCandidate.map((item: any) => {
-                    item.destroy()
-                    console.log("Устройства успешно удалены!")
-                })
             }
 
             await candidate.destroy()
@@ -147,6 +136,17 @@ class BrandController {
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
+    }
+
+    /**
+     * Получение количества брендов.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async getCountAll (req:Request, res: Response, next: NextFunction) {
+        const brands = await Brand.findAndCountAll()
+        return res.json(brands)
     }
 }
 

@@ -101,16 +101,6 @@ class DeviceController {
                 return next(ErrorHandler.badRequest('Такого материала не найдено в системе!'))
             }
 
-            const deviceCandidate = await Device.findAll({where: {deviceMaterialId: id}})
-            if (deviceCandidate.length === 0) {
-                console.log("Устройств с данным типом не найдено!")
-            } else {
-                deviceCandidate.map((item: any) => {
-                    item.destroy()
-                    console.log("Устройства успешно удалены!")
-                })
-            }
-
             await candidate.destroy()
             const material = await DeviceMaterial.findAll({order: [['id', 'asc']]})
             return res.json(material)

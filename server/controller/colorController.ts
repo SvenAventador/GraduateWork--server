@@ -47,7 +47,7 @@ class ColorController {
                 hexValue
             })
 
-            const color = await Color.findAll(({order: [['id', 'order']]}))
+            const color = await Color.findAll(({order: [['id', 'asc']]}))
             return res.json(color)
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
@@ -98,7 +98,7 @@ class ColorController {
                 return next(ErrorHandler.conflict('Формат данного параметра должен быть следующим: "#______" либо "#___"'))
             }
 
-            const candidate = await Color.findOne({where: {colorName, hexValue}})
+            const candidate = await Color.findOne({where: {id}})
             if (!candidate) {
                 return next(ErrorHandler.badRequest('Такого цвета устройства не найдено в системе!'))
             }
@@ -124,7 +124,7 @@ class ColorController {
      * @param res - ответ.
      * @param next - переход к следующей функции.
      */
-    async deleteMaterial(req: Request, res: Response, next: NextFunction) {
+    async deleteColor(req: Request, res: Response, next: NextFunction) {
         const {id} = req.body
 
         try {
@@ -132,16 +132,6 @@ class ColorController {
             const candidate = await Color.findOne({where: {id}})
             if (!candidate) {
                 return next(ErrorHandler.badRequest('Такого цвета не найдено в системе!'))
-            }
-
-            const deviceCandidate = await Device.findAll({where: {colorId: id}})
-            if (deviceCandidate.length === 0) {
-                console.log("Устройств с данным типом не найдено!")
-            } else {
-                deviceCandidate.map((item: any) => {
-                    item.destroy()
-                    console.log("Устройства успешно удалены!")
-                })
             }
 
             await candidate.destroy()

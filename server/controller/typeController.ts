@@ -2,7 +2,7 @@ import {NextFunction, Request, Response} from "express";
 import SecondaryFunctions from "../functions/secondaryFunctions";
 import ErrorHandler from "../error/errorHandler";
 
-const {Type, Device} = require("../models/models");
+const {Type} = require("../models/models");
 
 /**
  * Типы устройств магаина.
@@ -96,20 +96,9 @@ class TypeController {
         const {id} = req.body
 
         try {
-
             const candidate = await Type.findOne({where: {id}})
             if (!candidate) {
                 return next(ErrorHandler.badRequest('Такого типа не найдено в системе!'))
-            }
-
-            const deviceCandidate = await Device.findAll({where: {typeId: id}})
-            if (deviceCandidate.length === 0) {
-                console.log("Устройств с данным типом не найдено!")
-            } else {
-                deviceCandidate.map((item: any) => {
-                    item.destroy()
-                    console.log("Устройства успешно удалены!")
-                })
             }
 
             await candidate.destroy()
@@ -118,6 +107,17 @@ class TypeController {
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }
+    }
+
+    /**
+     * Получение количества типов.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async getCountAll (req:Request, res: Response, next: NextFunction) {
+        const types = await Type.findAndCountAll()
+        return res.json(types)
     }
 }
 

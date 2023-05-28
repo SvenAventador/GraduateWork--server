@@ -98,16 +98,6 @@ class WirelessTypeController {
                 return next(ErrorHandler.badRequest('Такого дополнения не найдено в системе!'))
             }
 
-            const deviceCandidate = await Device.findAll({where: {wirelessTypeId: id}})
-            if (deviceCandidate.length === 0) {
-                console.log("Устройств с данным типом не найдено!")
-            } else {
-                deviceCandidate.map((item: any) => {
-                    item.destroy()
-                    console.log("Устройства успешно удалены!")
-                })
-            }
-
             await candidate.destroy()
             const wireless = await WirelessType.findAll({order: [['id', 'asc']]})
             return res.json(wireless)

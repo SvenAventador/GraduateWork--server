@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt'
 import {UserDto} from "./userDto";
 import {ICustomRequest} from "../../middleware/user/authMiddleware";
 
-const {User, Cart} = require('../../models/models')
+const {User, Cart, Order} = require('../../models/models')
 
 /**
  * Пользователи магазина.
@@ -210,7 +210,7 @@ class UserController {
             if (
                 userEmail &&
                 userEmail !== candidate.userEmail &&
-                (await User.findOne({ where: { userEmail } }))
+                (await User.findOne({where: {userEmail}}))
             ) {
                 return next(
                     ErrorHandler.conflict(
@@ -222,7 +222,7 @@ class UserController {
             if (
                 userName &&
                 userName !== candidate.userName &&
-                (await User.findOne({ where: { userName } }))
+                (await User.findOne({where: {userName}}))
             ) {
                 return next(
                     ErrorHandler.conflict(
@@ -234,7 +234,7 @@ class UserController {
             if (
                 userPhone &&
                 userPhone !== candidate.userPhone &&
-                (await User.findOne({ where: { userPhone } }))
+                (await User.findOne({where: {userPhone}}))
             ) {
                 return next(
                     ErrorHandler.conflict(
@@ -269,6 +269,22 @@ class UserController {
                 ErrorHandler.internal(`Непредвиденная ошибка: ${error}`)
             );
         }
+    }
+
+    /**
+     * Клиенты нашего магазина.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
+    async getCountAllOrder(req: Request, res: Response, next: NextFunction) {
+
+        const usersWithOrders = await Order.findAndCountAll({
+            attributes: ['userId'],
+            raw: true,
+        });
+
+        return res.json({usersWithOrders});
     }
 }
 
