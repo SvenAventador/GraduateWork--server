@@ -130,6 +130,10 @@ const Device = sequelize.define('device', {
         type: DataTypes.DECIMAL,
         allowNull: false
     },
+    deviceCount:{
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
     rating: {
         type: DataTypes.INTEGER,
         defaultValue: 0

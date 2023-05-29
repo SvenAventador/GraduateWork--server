@@ -53,6 +53,7 @@ interface IUpdateDeviceParams {
     deviceName?: number;
     devicePrice?: number;
     deviceDescription?: number;
+    deviceCount?: number;
     typeId?: number;
     brandId?: number;
     colorId?: number;
@@ -94,6 +95,7 @@ class DeviceController {
                 deviceName,
                 devicePrice,
                 deviceDescription,
+                deviceCount,
                 typeId,
                 brandId,
                 colorId,
@@ -107,6 +109,14 @@ class DeviceController {
             }
 
             if (!(SecondaryFunctions.isNumber(devicePrice)) || (SecondaryFunctions.isEmpty(devicePrice))) {
+                return next(ErrorHandler.badRequest('Количество товара товара должно быть указан в числовом формате и не может быть пустым!'))
+            }
+
+            if (+deviceCount < 0) {
+                return next(ErrorHandler.conflict('Количество товара должно быть больше 0!'))
+            }
+
+            if (!(SecondaryFunctions.isNumber(deviceCount)) || (SecondaryFunctions.isEmpty(deviceCount))) {
                 return next(ErrorHandler.badRequest('Цена товара должна быть указана в числовом формате и не может быть пустой!'))
             }
 
@@ -144,6 +154,7 @@ class DeviceController {
                 deviceName,
                 devicePrice,
                 deviceDescription,
+                deviceCount,
                 typeId,
                 brandId,
                 colorId,
@@ -326,10 +337,16 @@ class DeviceController {
 
             devices = await Device.findAndCountAll({
                 where: {
-                    ...sortCondition
+                    ...sortCondition,
+                    deviceCount: {
+                        [Op.gt]: 0
+                    }
                 },
                 include: [
-                    {model: DeviceImage, as: 'images', where: {isMainImage: true}},
+                    {
+                        model: DeviceImage, as: 'images',
+                        where: {isMainImage: true}
+                    },
                 ],
                 order: orderClause,
                 limit,
@@ -362,7 +379,9 @@ class DeviceController {
         try {
             const devices = await Device.findAll({
                 include: [
-                    {model: DeviceImage, as: 'images'},
+                    {
+                        model: DeviceImage, as: 'images'
+                    },
                 ],
                 order: [['id', 'asc']]
             })
@@ -431,6 +450,7 @@ class DeviceController {
                 id,
                 deviceName,
                 devicePrice,
+                deviceCount,
                 deviceDescription,
                 typeId,
                 brandId,
@@ -445,6 +465,14 @@ class DeviceController {
 
             if (!(SecondaryFunctions.isNumber(devicePrice)) || (SecondaryFunctions.isEmpty(devicePrice))) {
                 return next(ErrorHandler.badRequest('Цена товара должна быть указана в числовом формате и не может быть пустой!'))
+            }
+
+            if (!(SecondaryFunctions.isNumber(devicePrice)) || (SecondaryFunctions.isEmpty(devicePrice))) {
+                return next(ErrorHandler.badRequest('Количество товара товара должно быть указан в числовом формате и не может быть пустым!'))
+            }
+
+            if (deviceCount! < 0) {
+                return next(ErrorHandler.conflict('Количество товара должно быть больше 0!'))
             }
 
             if (!(SecondaryFunctions.isNumber(typeId)) || (SecondaryFunctions.isEmpty(typeId))) {
@@ -481,6 +509,7 @@ class DeviceController {
                 deviceName,
                 devicePrice,
                 deviceDescription,
+                deviceCount,
                 typeId,
                 brandId,
                 colorId,

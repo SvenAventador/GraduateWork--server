@@ -113,8 +113,11 @@ class CartController {
 
             const candidate = await CartDevice.findOne({where: {cartId, deviceId}})
             if (candidate) {
+                if (deviceCandidate.deviceCount < candidate.amountDevice + 1) {
+                    return res.status(409).json({status: 409, message: "Товара больше нет на складе!"})
+                }
                 await candidate.update({amountDevice: candidate.amountDevice + 1})
-                return res.json({message: "Товар успешно добавлен в корзину!"})
+                return res.status(200).json({status: 200, message: "Товар успешно добавлен в корзину!"})
             }
 
             await CartDevice.create({cartId, deviceId})
@@ -183,6 +186,28 @@ class CartController {
                 })
                 return res.status(200).json({message: "Корзина успешно очищена!"});
             }
+        } catch {
+            return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
+        }
+    }
+
+    async updateAmountDevice(req: Request, res: Response, next: NextFunction) {
+        const {id, deviceAmount} = req.body
+
+        try {
+            const deviceCandidate = await Device.findOne({where: {id: id}})
+            const cartDevice = await CartDevice.findOne({where: {deviceId: id}})
+        console.log(id, deviceAmount)
+            if (!cartDevice) {
+                return next(ErrorHandler.badRequest('Данной записи не найдено!'))
+            }
+            if (deviceCandidate.deviceCount < deviceAmount) {
+                return next(ErrorHandler.conflict('Данного товара больше нет на складе!'))
+            }
+
+            await cartDevice.update({amountDevice: deviceAmount})
+
+            return res.json({message: "Количество успешно обновлено!" + "Количество: ", deviceAmount})
         } catch {
             return next(ErrorHandler.internal("Произошла ошибка во время выполнения запроса!"))
         }

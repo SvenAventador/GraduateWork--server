@@ -45,6 +45,23 @@ class OrderController {
                 return res.status(200).json({message: "Корзина пуста!"})
             }
 
+            for (let cartDevice of cartCandidate) {
+                const devices = await Device.findByPk(cartDevice.deviceId)
+
+                if (devices) {
+                    const amount = devices.deviceCount - cartDevice.amountDevice
+
+                    if (amount < 0) {
+                        return next(ErrorHandler.badRequest('Недостаточное количество устройств на складе! Пожалуйста, уменьшите количество'));
+                    }
+
+                    await Device.update({deviceCount: amount}, {where: {id: devices.id}})
+                }
+            }
+
+            const deviceWhereAmountZero = await Device.findAll({where: {deviceCount: 0}})
+            const deviceIdWhereAmountZero = deviceWhereAmountZero.map((device: any) => device.id)
+
             const order = await Order.create({
                 dateOrder: Date.now(),
                 userId: cartId,
@@ -57,8 +74,10 @@ class OrderController {
                 deviceId: cartDevice.deviceId,
                 orderId: order.id
             }));
+
             await OrderDevice.bulkCreate(orderDevices)
             await CartDevice.destroy({where: {cartId: cartId}})
+            await CartDevice.destroy({where: {deviceId: deviceIdWhereAmountZero}})
             return res.status(200).json({
                 message: "Спасибо, что выбрали именно нас!\n" +
                     "С уважением, администрация TechnoWorld ^_^"
@@ -148,7 +167,7 @@ class OrderController {
      * @param res - ответ.
      * @param next - переход к следующей функции.
      */
-    async getOneOrder(req:Request, res:Response, next: NextFunction) {
+    async getOneOrder(req: Request, res: Response, next: NextFunction) {
         const {id, deliveryStatusId} = req.body
 
         try {
@@ -179,7 +198,7 @@ class OrderController {
      * @param res - ответ.
      * @param next - переход к следующей функции.
      */
-    async getAllPrice (req:Request, res:Response, next: NextFunction) {
+    async getAllPrice(req: Request, res: Response, next: NextFunction) {
         const orders = await Order.findAll()
         let totalCost = 0
         orders.map((item: any) => {

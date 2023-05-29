@@ -7,6 +7,7 @@ import CartController from "../controller/cartController";
 routes.get('/:id', CartController.getCartId)
 routes.get('/get-all-goods/:id', CartController.getAllGoods)
 routes.post('/', CartController.createGoods)
+routes.put('/', CartController.updateAmountDevice)
 routes.delete('/:cartId/:deviceId', CartController.deleteItem)
 routes.delete('/:cartId', CartController.deleteAllItems)
 
