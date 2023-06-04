@@ -7,6 +7,9 @@ import path from "path";
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerFile = require('./swagger/swagger.json');
+
 const database = require('./models/db')
 const models = require('./models/models')
 import routes from './routes/routes'
@@ -19,6 +22,7 @@ app.use(fileUpload())
 app.use(express.static(path.resolve(__dirname, 'static')))
 app.use(cookieParser())
 app.use('/api', routes)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 
 app.use(errorHandlerMiddleware)
 

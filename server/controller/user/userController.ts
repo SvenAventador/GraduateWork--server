@@ -20,7 +20,12 @@ class UserController {
      */
     async registration(req: Request, res: Response, next: NextFunction) {
         try {
-            const {userName, userEmail, userPassword, roleUser} = req.body
+            const {
+                userName,
+                userEmail,
+                userPassword,
+                roleUser
+            } = req.body
 
             if ((!(SecondaryFunctions.isString(userName))) || (SecondaryFunctions.isEmpty(userName))) {
                 return next(ErrorHandler.badRequest("Некорректно указано имя пользователя."))
@@ -58,13 +63,20 @@ class UserController {
             }
 
             const hashPassword = await bcrypt.hash(userPassword, 5)
-            const user = await User.create({userName, userEmail, userPassword: hashPassword, roleUser})
+            const user = await User.create({
+                userName,
+                userEmail,
+                userPassword: hashPassword,
+                roleUser
+            })
             await Cart.create({userId: user.id})
 
-            const userDto = new UserDto(user.id,
+            const userDto = new UserDto(
+                user.id,
                 user.userName,
                 user.userEmail,
-                user.userRole)
+                user.userRole
+            )
 
             const token = SecondaryFunctions.generate_jwt(userDto as IUser)
 
@@ -82,7 +94,10 @@ class UserController {
      */
     async login(req: Request, res: Response, next: NextFunction) {
         try {
-            const {userEmail, userPassword} = req.body
+            const {
+                userEmail,
+                userPassword
+            } = req.body
 
             if ((!(SecondaryFunctions.isString(userEmail))) || (SecondaryFunctions.isEmpty(userEmail))) {
                 return next(ErrorHandler.badRequest("Некорректно указана почта пользователя."))

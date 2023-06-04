@@ -1,0 +1,739 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Руководство программиста",
+    "description": "Использование документации для руководства программиста с помощью инструмента Swagger",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:7000/api"
+    }
+  ],
+  "paths": {
+    "/brand": {
+      "post": {
+        "summary": "Добавление бренда",
+        "tags": [
+          "Бренды"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "brandName": {
+                    "type": "string",
+                    "description": "Наименование бренда"
+                  }
+                },
+                "required": [
+                  "brandName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Новый бренд создан"
+          },
+          "400": {
+            "description": "Некорректно указано название бренда устройства"
+          },
+          "409": {
+            "description": "Данное имя уже имеется в системе"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "get": {
+        "summary": "Получение всех брендов",
+        "tags": [
+          "Бренды"
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный запрос. Возвращает список брендов"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса"
+          }
+        }
+      },
+      "put": {
+        "summary": "Изменение данных выбранного бренда",
+        "tags": [
+          "Бренды"
+        ],
+        "requestBody": {
+          "description": "Измененные данные бренда",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID бренда"
+                  },
+                  "brandName": {
+                    "type": "string",
+                    "description": "Наименование бренда"
+                  }
+                },
+                "required": [
+                  "id",
+                  "brandName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "409": {
+            "description": "Введенное Вами название бренда существует"
+          },
+          "200": {
+            "description": "Данные успешно обновлены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удаление выбранного бренда",
+        "tags": [
+          "Бренды"
+        ],
+        "requestBody": {
+          "description": "Удаление выбранного бренда",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID выбранного бренда"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "200": {
+            "description": "Данные успешно удалены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      }
+    },
+    "/brand/{id}": {
+      "get": {
+        "summary": "Получение одного бренда",
+        "tags": [
+          "Бренды"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный запрос. Возвращает информацию о бренде"
+          },
+          "404": {
+            "description": "Бренд не найден"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса"
+          }
+        }
+      }
+    },
+    "/type": {
+      "post": {
+        "summary": "Добавление типа",
+        "tags": [
+          "Типы"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "typeName": {
+                    "type": "string",
+                    "description": "Наименование типа"
+                  }
+                },
+                "required": [
+                  "typeName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Новый бренд создан"
+          },
+          "400": {
+            "description": "Некорректно указано название типа устройства"
+          },
+          "409": {
+            "description": "Данное имя уже имеется в системе"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "get": {
+        "summary": "Получение всех типов",
+        "tags": [
+          "Типы"
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный запрос. Возвращает список брендов"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса"
+          }
+        }
+      },
+      "put": {
+        "summary": "Изменение данных выбранного типа",
+        "tags": [
+          "Типы"
+        ],
+        "requestBody": {
+          "description": "Измененные данные типа",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID типа"
+                  },
+                  "typeName": {
+                    "type": "string",
+                    "description": "Наименование типа"
+                  }
+                },
+                "required": [
+                  "id",
+                  "typeName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "409": {
+            "description": "Введенное Вами название бренда существует"
+          },
+          "200": {
+            "description": "Данные успешно обновлены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удаление выбранного типа",
+        "tags": [
+          "Типы"
+        ],
+        "requestBody": {
+          "description": "Удаление выбранного типа",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID выбранного типа"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "200": {
+            "description": "Данные успешно удалены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      }
+    },
+    "/material": {
+      "post": {
+        "summary": "Добавление материала",
+        "tags": [
+          "Материалы"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "materialName": {
+                    "type": "string",
+                    "description": "Наименование материала"
+                  }
+                },
+                "required": [
+                  "materialName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Новый бренд создан"
+          },
+          "400": {
+            "description": "Некорректно указано название материала устройства"
+          },
+          "409": {
+            "description": "Данное имя уже имеется в системе"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "get": {
+        "summary": "Получение всех материалов",
+        "tags": [
+          "Материалы"
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный запрос. Возвращает список брендов"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса"
+          }
+        }
+      },
+      "put": {
+        "summary": "Изменение данных выбранного материала",
+        "tags": [
+          "Материалы"
+        ],
+        "requestBody": {
+          "description": "Измененные данные материала",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID материала"
+                  },
+                  "materialName": {
+                    "type": "string",
+                    "description": "Наименование материала"
+                  }
+                },
+                "required": [
+                  "id",
+                  "materialName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "409": {
+            "description": "Введенное Вами название материала существует"
+          },
+          "200": {
+            "description": "Данные успешно обновлены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удаление выбранного материала",
+        "tags": [
+          "Материалы"
+        ],
+        "requestBody": {
+          "description": "Удаление выбранного материала",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID выбранного материала"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "200": {
+            "description": "Данные успешно удалены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      }
+    },
+    "/wireless": {
+      "post": {
+        "summary": "Добавление дополнения",
+        "tags": [
+          "Дополнения"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "typeName": {
+                    "type": "string",
+                    "description": "Наименование дополнения"
+                  }
+                },
+                "required": [
+                  "typeName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Новое дополнение создано"
+          },
+          "400": {
+            "description": "Некорректно указано название дополнения устройства"
+          },
+          "409": {
+            "description": "Данное дополнение уже имеется в системе"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "get": {
+        "summary": "Получение всех дополнений",
+        "tags": [
+          "Дополнения"
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный запрос. Возвращает список дополнений"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса"
+          }
+        }
+      },
+      "put": {
+        "summary": "Изменение данных выбранного дополнения",
+        "tags": [
+          "Дополнения"
+        ],
+        "requestBody": {
+          "description": "Измененные данные материала",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID дополнения"
+                  },
+                  "typeName": {
+                    "type": "string",
+                    "description": "Наименование дополнения"
+                  }
+                },
+                "required": [
+                  "id",
+                  "typeName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "409": {
+            "description": "Введенное Вами название дополнения существует"
+          },
+          "200": {
+            "description": "Данные успешно обновлены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удаление выбранного дополнения",
+        "tags": [
+          "Дополнения"
+        ],
+        "requestBody": {
+          "description": "Удаление выбранного дополнения",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID выбранного дополнения"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "200": {
+            "description": "Данные успешно удалены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      }
+    },
+    "/color": {
+      "post": {
+        "summary": "Добавление цвета",
+        "tags": [
+          "Цвета"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "colorName": {
+                    "type": "string",
+                    "description": "Наименование цвета"
+                  },
+                  "hexValue": {
+                    "type": "string",
+                    "description": "Наименование hex значения цвета"
+                  }
+                },
+                "required": [
+                  "colorName",
+                  "hexValue"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Новый цвет создан"
+          },
+          "400": {
+            "description": "Некорректно указаны значения цвета устройства"
+          },
+          "409": {
+            "description": "Данные значения уже имеются в системе"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "get": {
+        "summary": "Получение всех цветов",
+        "tags": [
+          "Цвета"
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный запрос. Возвращает список цветов"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса"
+          }
+        }
+      },
+      "put": {
+        "summary": "Изменение данных выбранного цвета",
+        "tags": [
+          "Цвета"
+        ],
+        "requestBody": {
+          "description": "Измененные данные материала",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID цвета"
+                  },
+                  "colorName": {
+                    "type": "string",
+                    "description": "Наименование цвета"
+                  },
+                  "hexValue": {
+                    "type": "string",
+                    "description": "Hex значение цвета"
+                  }
+                },
+                "required": [
+                  "id",
+                  "colorName",
+                  "hexValue"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "409": {
+            "description": "Введенное Вами название цвета существует"
+          },
+          "200": {
+            "description": "Данные успешно обновлены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удаление выбранного цвета",
+        "tags": [
+          "Цвета"
+        ],
+        "requestBody": {
+          "description": "Удаление выбранного цвета",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID выбранного цвета"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Некорректное указание параметра"
+          },
+          "200": {
+            "description": "Данные успешно удалены"
+          },
+          "500": {
+            "description": "Произошла ошибка во время выполнения запроса!"
+          }
+        }
+      }
+    }
+  }
+}
