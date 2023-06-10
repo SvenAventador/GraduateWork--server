@@ -191,13 +191,18 @@ class CartController {
         }
     }
 
+    /**
+     * Обновление колчества товара в корзине.
+     * @param req - запрос.
+     * @param res - ответ.
+     * @param next - переход к следующей функции.
+     */
     async updateAmountDevice(req: Request, res: Response, next: NextFunction) {
         const {id, deviceAmount} = req.body
 
         try {
             const deviceCandidate = await Device.findOne({where: {id: id}})
             const cartDevice = await CartDevice.findOne({where: {deviceId: id}})
-        console.log(id, deviceAmount)
             if (!cartDevice) {
                 return next(ErrorHandler.badRequest('Данной записи не найдено!'))
             }

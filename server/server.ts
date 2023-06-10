@@ -21,6 +21,7 @@ app.use(cors())
 app.use(fileUpload())
 app.use(express.static(path.resolve(__dirname, 'static')))
 app.use(cookieParser())
+
 app.use('/api', routes)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 
